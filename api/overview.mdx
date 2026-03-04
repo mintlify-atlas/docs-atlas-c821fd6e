@@ -1,0 +1,170 @@
+---
+title: API Overview
+description: Introduction to the Nurse Handoff Helper API
+---
+
+## Base URL
+
+The API is available at:
+
+```
+http://localhost:3001
+```
+
+In production, replace with your deployed server URL.
+
+## Authentication
+
+The Nurse Handoff Helper API currently uses Supabase for data storage. Some endpoints require:
+
+- **SUPABASE_URL**: Your Supabase project URL
+- **SUPABASE_ANON_KEY**: Public anonymous key for client operations
+- **SUPABASE_SERVICE_KEY**: Service role key for admin operations (required for `/api/nurses/create-accounts`)
+- **ANTHROPIC_API_KEY**: Required for Claude AI endpoints
+
+Set these in your `.env` file:
+
+```bash
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=your-anon-key
+SUPABASE_SERVICE_KEY=your-service-key
+ANTHROPIC_API_KEY=your-anthropic-key
+```
+
+## Request Format
+
+All POST/PATCH requests should include:
+
+```http
+Content-Type: application/json
+```
+
+For image uploads, use:
+
+```http
+Content-Type: multipart/form-data
+```
+
+## Response Format
+
+All responses are returned in JSON format.
+
+### Success Response
+
+```json
+{
+  "success": true,
+  "data": {...}
+}
+```
+
+### Error Response
+
+```json
+{
+  "error": "Error message",
+  "details": "Additional error details"
+}
+```
+
+## HTTP Status Codes
+
+| Status Code | Description |
+|-------------|-------------|
+| 200 | Success |
+| 400 | Bad Request - Invalid parameters or missing required fields |
+| 404 | Not Found - Resource doesn't exist |
+| 500 | Internal Server Error - Server-side error |
+| 503 | Service Unavailable - Required service (Claude, Supabase) not configured |
+
+## Error Codes
+
+<ResponseField name="error" type="string">
+  Human-readable error message
+</ResponseField>
+
+<ResponseField name="details" type="string">
+  Additional error details or stack trace information
+</ResponseField>
+
+### Common Errors
+
+<Expandable title="503 Service Unavailable">
+
+**Claude API Not Configured**
+```json
+{
+  "error": "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file."
+}
+```
+
+**Admin Operations Unavailable**
+```json
+{
+  "error": "Admin operations require SUPABASE_SERVICE_KEY to be set in environment variables"
+}
+```
+
+</Expandable>
+
+<Expandable title="400 Bad Request">
+
+**Missing Required Fields**
+```json
+{
+  "error": "No image file provided"
+}
+```
+
+```json
+{
+  "error": "No patient data provided"
+}
+```
+
+**Duplicate Resource**
+```json
+{
+  "success": false,
+  "error": "A patient with this MRN already exists"
+}
+```
+
+</Expandable>
+
+<Expandable title="404 Not Found">
+
+```json
+{
+  "error": "Patient not found",
+  "searchedMRN": "12345"
+}
+```
+
+</Expandable>
+
+## Rate Limits
+
+File upload limits:
+- Maximum file size: 10MB
+- Maximum JSON payload: 50MB
+
+## API Endpoints
+
+<CardGroup cols={2}>
+  <Card title="Health Check" icon="heart-pulse" href="/api/health">
+    Check API and service availability
+  </Card>
+  <Card title="Image Analysis" icon="image" href="/api/image-analysis">
+    Analyze handoff images with AI
+  </Card>
+  <Card title="Record Summarization" icon="file-medical" href="/api/record-summarization">
+    Generate AI-powered handoff summaries
+  </Card>
+  <Card title="Patients" icon="hospital-user" href="/api/patients">
+    Manage patient records
+  </Card>
+  <Card title="Nurses" icon="user-nurse" href="/api/nurses">
+    Manage nurse accounts
+  </Card>
+</CardGroup>

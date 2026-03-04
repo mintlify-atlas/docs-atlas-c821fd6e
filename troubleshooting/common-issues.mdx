@@ -1,0 +1,599 @@
+---
+title: 'Common Issues'
+description: 'Solutions to frequently encountered problems'
+---
+
+## Overview
+
+This guide covers common issues you may encounter when running the Nurse Handoff Helper application and their solutions.
+
+<Tip>
+Before troubleshooting, ensure you've completed the initial setup as described in the Getting Started guide and have all required environment variables configured.
+</Tip>
+
+## API Configuration Issues
+
+### "API is not configured" Error
+
+**Problem**: When trying to use AI analysis features, you receive an error that the API is not configured.
+
+**Cause**: Missing or invalid API keys in your `.env` file.
+
+**Solution**:
+
+1. Verify your `.env` file exists in the project root directory
+
+2. Check that at least one AI provider API key is configured:
+
+```env
+# You need at least one of these:
+ANTHROPIC_API_KEY=your_anthropic_key_here
+OPENAI_API_KEY=your_openai_key_here
+```
+
+3. Ensure the API keys are valid:
+   - **Anthropic keys** start with `sk-ant-`
+   - **OpenAI keys** start with `sk-`
+
+4. Restart the backend server after modifying `.env`:
+
+```bash
+npm run server
+```
+
+<Accordion title="Verify API Configuration">
+You can check which APIs are configured by calling the health endpoint:
+
+```bash
+curl http://localhost:3001/api/health
+```
+
+Expected response:
+```json
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+
+If a provider shows `false`, the API key is not configured correctly.
+</Accordion>
+
+### API Key Not Working
+
+**Problem**: API key is configured but requests still fail.
+
+**Possible causes and solutions**:
+
+1. **Invalid or expired key**:
+   - Regenerate the API key in the provider's console
+   - Verify the key hasn't been revoked
+
+2. **Rate limit exceeded**:
+   - Check your usage in the provider's dashboard
+   - Wait for rate limit reset
+   - Upgrade to higher tier if needed
+
+3. **Insufficient credits/quota**:
+   - Add credits to your Anthropic account
+   - Check billing status in OpenAI dashboard
+
+4. **Network restrictions**:
+   - Ensure your server can reach API endpoints
+   - Check firewall rules
+   - Verify no proxy configuration issues
+
+<Warning>
+Never commit API keys to version control. If you accidentally commit a key, revoke it immediately and generate a new one.
+</Warning>
+
+## Server Issues
+
+### Server Not Starting
+
+**Problem**: Backend server fails to start or crashes immediately.
+
+**Common causes and solutions**:
+
+<Accordion title="Port Already in Use">
+**Symptom**: Error message `Error: listen EADDRINUSE: address already in use :::3001`
+
+**Cause**: Another process is using port 3001.
+
+**Solutions**:
+
+1. **Find and kill the process**:
+
+```bash
+# On Linux/Mac
+lsof -i :3001
+kill -9 <PID>
+
+# On Windows
+netstat -ano | findstr :3001
+taskkill /PID <PID> /F
+```
+
+2. **Change the port** in `.env`:
+
+```env
+PORT=3002
+```
+
+Then restart the server:
+
+```bash
+npm run server
+```
+</Accordion>
+
+<Accordion title="Missing Dependencies">
+**Symptom**: Error about missing modules like `Cannot find module 'express'`
+
+**Cause**: Dependencies not installed.
+
+**Solution**:
+
+```bash
+npm install
+```
+
+If issues persist, try:
+
+```bash
+rm -rf node_modules package-lock.json
+npm install
+```
+</Accordion>
+
+<Accordion title="Supabase Connection Error">
+**Symptom**: Server starts but database operations fail.
+
+**Cause**: Invalid Supabase credentials.
+
+**Solution**:
+
+1. Verify Supabase environment variables:
+
+```env
+VITE_SUPABASE_URL=https://your-project.supabase.co
+VITE_SUPABASE_ANON_KEY=your_anon_key
+SUPABASE_SERVICE_KEY=your_service_key
+```
+
+2. Check Supabase project status at [app.supabase.com](https://app.supabase.com)
+
+3. Verify API keys haven't been revoked
+
+4. Ensure your IP isn't blocked (check Supabase dashboard)
+</Accordion>
+
+### Frontend Not Connecting to Backend
+
+**Problem**: Frontend loads but API requests fail.
+
+**Symptoms**:
+- Network errors in browser console
+- "Failed to fetch" errors
+- Timeout errors
+
+**Solutions**:
+
+1. **Verify backend is running**:
+
+```bash
+curl http://localhost:3001/api/health
+```
+
+2. **Check CORS configuration** (server/index.js:15):
+
+```javascript
+app.use(cors()); // Should allow all origins in development
+```
+
+3. **Verify API endpoint URL** in frontend code:
+
+```javascript
+// Should use http://localhost:3001 in development
+const API_URL = 'http://localhost:3001';
+```
+
+4. **Check browser console** for specific error messages
+
+## Image Upload Issues
+
+### Images Not Analyzing
+
+**Problem**: Image upload succeeds but analysis fails or returns no results.
+
+**Solutions**:
+
+<Accordion title="File Size Too Large">
+**Cause**: Image exceeds the 10MB limit (server/index.js:23).
+
+**Solution**:
+
+1. **Compress the image** before uploading:
+   - Use image editing software
+   - Reduce resolution if very high
+   - Convert to JPEG format (usually smaller)
+
+2. **Increase server limit** (if appropriate):
+
+```javascript
+// server/index.js
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+});
+```
+
+Also update JSON limit:
+
+```javascript
+app.use(express.json({ limit: "100mb" }));
+```
+</Accordion>
+
+<Accordion title="Unsupported File Format">
+**Cause**: File format not supported by AI provider.
+
+**Solution**:
+
+Supported formats:
+- JPEG/JPG
+- PNG
+- GIF
+- WebP
+
+Convert other formats (BMP, TIFF, etc.) to JPEG or PNG before uploading.
+</Accordion>
+
+<Accordion title="Image Quality Issues">
+**Cause**: Image is too blurry, dark, or low quality for AI to read text.
+
+**Solution**:
+
+- Ensure good lighting when taking photos
+- Hold camera steady to avoid blur
+- Get close enough to make text readable
+- Clean whiteboard before photographing
+- Use higher resolution camera if available
+- Avoid glare and reflections
+</Accordion>
+
+### "No image file provided" Error
+
+**Problem**: Upload appears to work but server reports no file.
+
+**Causes and solutions**:
+
+1. **Form encoding issue**: Ensure frontend sends `multipart/form-data`:
+
+```javascript
+const formData = new FormData();
+formData.append('image', file);
+
+fetch('/api/analyze-image/claude', {
+  method: 'POST',
+  body: formData // Don't set Content-Type header
+});
+```
+
+2. **File input name mismatch**: Server expects field name `image` (server/index.js:65)
+
+3. **File size limit in nginx/proxy**: Check reverse proxy configuration if using one
+
+## Database Issues
+
+### Authentication Failures
+
+**Problem**: Users cannot log in or get authentication errors.
+
+<Accordion title="Nurse Account Not Created">
+**Cause**: Nurse exists in database but has no Supabase Auth account.
+
+**Solution**:
+
+Create auth accounts for all nurses:
+
+```bash
+curl -X POST http://localhost:3001/api/nurses/create-accounts
+```
+
+This requires `SUPABASE_SERVICE_KEY` in your `.env` file.
+</Accordion>
+
+<Accordion title="Invalid Credentials">
+**Cause**: Wrong email or password.
+
+**Solution**:
+
+1. Verify email address is correct
+2. Check if account was created successfully
+3. Reset password if needed using Supabase Auth UI
+4. Check Supabase Auth logs for failed login attempts
+</Accordion>
+
+<Accordion title="Email Not Confirmed">
+**Cause**: Supabase requires email confirmation but nurse hasn't confirmed.
+
+**Solution**:
+
+The `/api/nurses/create-accounts` endpoint auto-confirms emails (server/index.js:662).
+
+If using manual account creation:
+
+```javascript
+email_confirm: true // Add this parameter
+```
+</Accordion>
+
+### Patient Data Not Loading
+
+**Problem**: Patient list is empty or specific patient won't load.
+
+**Solutions**:
+
+1. **Verify database has data**:
+   - Check Supabase dashboard
+   - Query `patients` table directly
+   - Ensure Row Level Security policies allow access
+
+2. **Check API response**:
+
+```bash
+curl http://localhost:3001/api/patients
+```
+
+3. **Review RLS policies**: Supabase Row Level Security may be blocking access
+
+4. **Check for errors** in server logs:
+
+```bash
+npm run server
+# Look for database error messages
+```
+
+### Handoff Notes Not Saving
+
+**Problem**: Generated handoff notes don't save to patient record.
+
+**Debugging steps**:
+
+1. **Check browser console** for error messages
+
+2. **Verify API request** succeeds:
+
+```bash
+curl -X POST http://localhost:3001/api/patients/MRN123/handoff \
+  -H "Content-Type: application/json" \
+  -d '{"handoffNotes": "Test notes"}'
+```
+
+3. **Check server logs** (server/index.js:469-554) for detailed error information
+
+4. **Verify patient exists** with the given MRN
+
+5. **Check database permissions** - ensure `handoff_notes` column is writable
+
+## Build and Deployment Issues
+
+### Build Fails
+
+**Problem**: `npm run build` fails with errors.
+
+<Accordion title="TypeScript/ESLint Errors">
+**Cause**: Code has type errors or linting issues.
+
+**Solution**:
+
+1. Review and fix errors shown in build output
+2. Run linter to see all issues:
+
+```bash
+npm run lint
+```
+
+3. Fix issues or temporarily disable strict mode (not recommended for production)
+</Accordion>
+
+<Accordion title="Out of Memory">
+**Symptom**: `JavaScript heap out of memory` error during build.
+
+**Solution**:
+
+Increase Node.js memory limit:
+
+```bash
+export NODE_OPTIONS="--max-old-space-size=4096"
+npm run build
+```
+
+Or update package.json:
+
+```json
+{
+  "scripts": {
+    "build": "NODE_OPTIONS=--max-old-space-size=4096 vite build"
+  }
+}
+```
+</Accordion>
+
+<Accordion title="Missing Environment Variables">
+**Cause**: Frontend requires certain variables at build time.
+
+**Solution**:
+
+Ensure `VITE_*` variables are set during build:
+
+```bash
+VITE_SUPABASE_URL=xxx VITE_SUPABASE_ANON_KEY=xxx npm run build
+```
+
+Or use `.env.production` file.
+</Accordion>
+
+### Production Deployment Issues
+
+**Problem**: App works locally but fails in production.
+
+**Common issues**:
+
+1. **Environment variables not set**: Verify all required variables in production environment
+
+2. **CORS errors**: Update CORS configuration for production domain:
+
+```javascript
+app.use(cors({
+  origin: process.env.FRONTEND_URL
+}));
+```
+
+3. **HTTPS required**: Ensure SSL certificate is properly configured
+
+4. **Port issues**: Production platform may assign different port:
+
+```javascript
+const PORT = process.env.PORT || 3001;
+```
+
+5. **Static files not served**: If using monolithic deployment, ensure static file serving is configured
+
+## Performance Issues
+
+### Slow AI Responses
+
+**Problem**: AI analysis takes a long time or times out.
+
+**Causes and solutions**:
+
+1. **Large image files**: Compress images before uploading (under 5MB recommended)
+
+2. **Complex patient records**: Very detailed records take longer to analyze
+
+3. **API provider latency**: Check status pages:
+   - [Anthropic Status](https://status.anthropic.com/)
+   - [OpenAI Status](https://status.openai.com/)
+
+4. **Network issues**: Test connection to API endpoints
+
+<Tip>
+The AI models (Claude Sonnet 4 and GPT-4o) typically respond in 3-10 seconds. If consistently slower, investigate network or API issues.
+</Tip>
+
+### High Server Memory Usage
+
+**Problem**: Backend server uses excessive memory.
+
+**Causes**:
+
+1. **Image uploads in memory**: Large images stored in memory during processing
+2. **Multiple concurrent requests**: Many simultaneous AI requests
+3. **Memory leak**: Check for unclosed connections or circular references
+
+**Solutions**:
+
+1. **Reduce file size limit**
+2. **Implement request queuing**
+3. **Scale horizontally** (multiple server instances)
+4. **Monitor memory usage** and restart server if necessary
+
+## Getting Additional Help
+
+### Enabling Debug Logging
+
+The server logs important information to console. View logs:
+
+```bash
+npm run server
+```
+
+Look for:
+- `=== ... ===` sections showing detailed operation logs
+- Error messages with stack traces
+- Supabase query details
+- AI provider responses
+
+### Checking System Health
+
+Verify system components:
+
+```bash
+# Check server health
+curl http://localhost:3001/api/health
+
+# Check Supabase connection
+curl http://localhost:3001/api/nurses
+
+# Check AI provider (Claude)
+curl -X POST http://localhost:3001/api/analyze-image/claude \
+  -F "image=@test-image.jpg"
+```
+
+### Reporting Issues
+
+When reporting issues, include:
+
+1. **Error message**: Full error text from console or browser
+2. **Steps to reproduce**: What actions trigger the issue
+3. **Environment**: Development or production, OS, Node version
+4. **Configuration**: Which AI providers are enabled
+5. **Logs**: Relevant server logs (redact sensitive info)
+6. **Browser console**: Any frontend errors
+
+### Common Error Messages Reference
+
+<Accordion title="Error Messages Quick Reference">
+| Error Message | Cause | Solution |
+|--------------|-------|----------|
+| "API is not configured" | Missing API key | Add key to `.env` and restart server |
+| "EADDRINUSE" | Port already in use | Change port or kill process |
+| "Cannot find module" | Missing dependencies | Run `npm install` |
+| "Failed to fetch" | Backend not running | Start backend with `npm run server` |
+| "No image file provided" | Upload configuration issue | Check FormData and field name |
+| "Patient not found" | Invalid MRN | Verify patient exists in database |
+| "Failed to save handoff notes" | Database permission issue | Check RLS policies and column permissions |
+| "Rate limit exceeded" | Too many API requests | Wait for reset or upgrade plan |
+| "Insufficient credits" | No API credits remaining | Add credits to account |
+| "Network error" | Connectivity issue | Check internet and firewall |
+</Accordion>
+
+## Preventive Measures
+
+### Regular Maintenance
+
+- **Update dependencies**: Run `npm update` monthly
+- **Monitor API usage**: Check provider dashboards weekly
+- **Review logs**: Check for recurring errors
+- **Test backups**: Verify database backups work
+- **Document issues**: Keep a log of problems and solutions
+
+### Testing Checklist
+
+Before deploying changes:
+
+- [ ] Test AI analysis with Claude
+- [ ] Test AI analysis with OpenAI (if configured)
+- [ ] Test image upload and analysis
+- [ ] Test patient record retrieval
+- [ ] Test handoff note generation
+- [ ] Test handoff note saving
+- [ ] Test authentication flow
+- [ ] Verify all environment variables
+- [ ] Check error handling
+- [ ] Review server logs for warnings
+
+## Need More Help?
+
+If you're still experiencing issues:
+
+1. Review the [Production Deployment](/deployment/production) guide
+2. Check [Security Best Practices](/deployment/security)
+3. Consult your organization's IT support
+4. Review Supabase documentation for database issues
+5. Check AI provider documentation for API issues

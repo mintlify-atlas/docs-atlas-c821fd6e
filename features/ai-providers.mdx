@@ -1,0 +1,499 @@
+---
+title: "AI Providers"
+description: "Claude and OpenAI integration for handoff note generation and image analysis"
+icon: "robot"
+---
+
+## Overview
+
+Nurse Handoff Helper integrates with AI providers to power intelligent features like handoff note generation and medical image analysis. Currently, the system supports **Claude (Anthropic)** with the latest Sonnet 4 model.
+
+## Supported Providers
+
+### Claude (Anthropic)
+
+<Card title="Claude Sonnet 4" icon="sparkles">
+  **Model:** `claude-sonnet-4-20250514`
+  
+  **Capabilities:**
+  - Text generation for handoff summaries
+  - Vision analysis for medical images and whiteboards
+  - Structured data extraction
+  - Trend analysis and clinical reasoning
+</Card>
+
+Claude is the primary and recommended AI provider for this application. It excels at:
+
+<CardGroup cols={2}>
+  <Card title="Medical Context" icon="stethoscope">
+    Understanding clinical terminology and medical records
+  </Card>
+  
+  <Card title="Vision Analysis" icon="eye">
+    Reading handwritten notes and whiteboard images
+  </Card>
+  
+  <Card title="Structured Output" icon="table">
+    Generating organized, scannable handoff notes
+  </Card>
+  
+  <Card title="Safety Focus" icon="shield">
+    Identifying and highlighting critical safety concerns
+  </Card>
+</CardGroup>
+
+## Configuration
+
+### Environment Setup
+
+From `~/workspace/source/server/index.js:8-29`:
+
+```bash .env
+# Claude/Anthropic API Key
+ANTHROPIC_API_KEY=sk-ant-api03-...
+
+# Server Configuration
+PORT=3001
+
+# Supabase Configuration (for data persistence)
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+```
+
+<Warning>
+**Keep API Keys Secret** - Never commit `.env` files to version control. The `.gitignore` file should include `.env`.
+</Warning>
+
+### Initialize Client
+
+The backend initializes the Anthropic client at startup:
+
+```javascript
+import Anthropic from "@anthropic-ai/sdk";
+
+const anthropic = process.env.ANTHROPIC_API_KEY
+  ? new Anthropic({ apiKey: process.env.ANTHROPIC_API_KEY })
+  : null;
+```
+
+From `~/workspace/source/server/index.js:26-29`
+
+### Health Check
+
+Verify AI provider configuration with the health endpoint:
+
+<CodeGroup>
+```bash Request
+curl http://localhost:3001/api/health
+```
+
+```json Response
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+</CodeGroup>
+
+From `~/workspace/source/server/index.js:52-60`
+
+## API Endpoints
+
+### Text Generation
+
+#### Summarize Patient Record
+
+**Endpoint:** `POST /api/summarize-record/claude`
+
+From `~/workspace/source/server/index.js:145-296`:
+
+<CodeGroup>
+```javascript Request
+fetch('http://localhost:3001/api/summarize-record/claude', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    patientData: {
+      demographics: { name: "John Doe", age: 65, sex: "M" },
+      vitals: { temp: [98.6], heartRate: [72] },
+      medications: ["Lisinopril", "Metformin"],
+      tasks: [/* task array */]
+    },
+    previousNotes: "Previous handoff content...",
+    imageAnalysis: "Optional image analysis..."
+  })
+});
+```
+
+```json Response
+{
+  "summary": "## Changes Since Last Handoff\n\n**CHANGED:** Heart rate increased from 68 to 72...\n\n## Patient Overview\n...",
+  "provider": "claude"
+}
+```
+</CodeGroup>
+
+**Model Configuration:**
+
+```javascript
+const message = await anthropic.messages.create({
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 2048,
+  messages: [
+    {
+      role: "user",
+      content: promptContent,
+    },
+  ],
+});
+```
+
+<Accordion title="Prompt Engineering Details">
+The prompt sent to Claude includes:
+
+1. **Role Definition**: "You are a clinical nursing assistant"
+2. **Task Description**: Analyze patient record and create handoff summary
+3. **Structure Requirements**: 6 key sections (overview, status, labs, meds, tasks, safety)
+4. **Emphasis on Trends**: "WE CARE A LOT ABOUT TRENDS"
+5. **Task Status Details**: Total, completed, and outstanding tasks with priorities
+6. **Comparison Logic**: If `previousNotes` provided, generate "Changes Since Last Handoff"
+7. **Image Integration**: If `imageAnalysis` provided, merge with electronic record
+
+From `~/workspace/source/server/index.js:171-275`
+</Accordion>
+
+#### Extract Structured Data
+
+**Endpoint:** `POST /api/extract-patient-data/claude`
+
+Extract structured patient information from unstructured text or analysis.
+
+From `~/workspace/source/server/index.js:1020-1103`:
+
+<CodeGroup>
+```javascript Request
+fetch('http://localhost:3001/api/extract-patient-data/claude', {
+  method: 'POST',
+  headers: { 'Content-Type': 'application/json' },
+  body: JSON.stringify({
+    summary: "Patient John Doe, 65M, admitted with chest pain. BP 132/78, HR 72. Allergies: Penicillin. DNR status. On Lisinopril and Metformin."
+  })
+});
+```
+
+```json Response
+{
+  "success": true,
+  "patientData": {
+    "name": "John Doe",
+    "mrn": null,
+    "age": 65,
+    "sex": "M",
+    "room": null,
+    "diagnosis": "Chest pain",
+    "condition": "Chest pain",
+    "riskLevel": "high",
+    "codeStatus": "DNR",
+    "medications": ["Lisinopril", "Metformin"],
+    "allergies": ["Penicillin"],
+    "lastVitals": {
+      "bp": "132/78",
+      "heartRate": 72
+    }
+  }
+}
+```
+</CodeGroup>
+
+### Vision Analysis
+
+#### Analyze Medical Image
+
+**Endpoint:** `POST /api/analyze-image/claude`
+
+From `~/workspace/source/server/index.js:63-142`:
+
+<CodeGroup>
+```javascript Fetch API
+const formData = new FormData();
+formData.append('image', selectedFile);
+
+const response = await fetch(
+  'http://localhost:3001/api/analyze-image/claude',
+  { method: 'POST', body: formData }
+);
+
+const data = await response.json();
+```
+
+```bash cURL
+curl -X POST http://localhost:3001/api/analyze-image/claude \
+  -F "image=@whiteboard.jpg"
+```
+</CodeGroup>
+
+**Image Processing:**
+
+```javascript
+const base64Image = req.file.buffer.toString("base64");
+const mediaType = req.file.mimetype;
+
+const message = await anthropic.messages.create({
+  model: "claude-sonnet-4-20250514",
+  max_tokens: 2048,
+  messages: [
+    {
+      role: "user",
+      content: [
+        {
+          type: "image",
+          source: {
+            type: "base64",
+            media_type: mediaType,
+            data: base64Image,
+          },
+        },
+        {
+          type: "text",
+          text: `You are a clinical nursing assistant analyzing a handoff document or whiteboard...`,
+        },
+      ],
+    },
+  ],
+});
+```
+
+From `~/workspace/source/server/index.js:79-130`
+
+## Error Handling
+
+### Missing Configuration
+
+```javascript
+if (!anthropic) {
+  return res.status(503).json({
+    error: "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file.",
+  });
+}
+```
+
+From `~/workspace/source/server/index.js:68-73` and similar checks throughout
+
+### API Errors
+
+<CodeGroup>
+```javascript Error Response
+{
+  "error": "Failed to analyze image with Claude",
+  "details": "Invalid API key provided"
+}
+```
+
+```javascript Error Response
+{
+  "error": "Failed to summarize record with Claude",
+  "details": "Rate limit exceeded"
+}
+```
+</CodeGroup>
+
+From `~/workspace/source/server/index.js:134-140` and `~/workspace/source/server/index.js:289-295`
+
+## Model Details
+
+### Claude Sonnet 4
+
+<Tabs>
+  <Tab title="Specifications">
+    **Model ID:** `claude-sonnet-4-20250514`
+    
+    **Max Tokens:** 2048 (configurable)
+    
+    **Input:** Text and images (base64 encoded)
+    
+    **Vision:** Supports image analysis up to 10MB
+    
+    **Context Window:** Large context for comprehensive patient records
+  </Tab>
+  
+  <Tab title="Use Cases">
+    - **Handoff Note Generation** - Structured clinical summaries
+    - **Image Analysis** - Whiteboard and document OCR
+    - **Data Extraction** - Structured data from unstructured text
+    - **Trend Analysis** - Identifying changes in patient status
+    - **Task Prioritization** - Organizing tasks by urgency
+  </Tab>
+  
+  <Tab title="Strengths">
+    - Excellent medical knowledge
+    - Clear, structured output
+    - Strong vision capabilities
+    - Safety-focused reasoning
+    - Handles handwritten text well
+    - Good at identifying trends
+  </Tab>
+</Tabs>
+
+## Token Usage
+
+Typical token consumption:
+
+<Card title="Token Estimates">
+  **Handoff Note Generation:**
+  - Input: 500-1500 tokens (patient data + prompts)
+  - Output: 400-800 tokens (handoff summary)
+  - Total: ~1000-2300 tokens per generation
+  
+  **Image Analysis:**
+  - Input: 1000-2000 tokens (image + prompt)
+  - Output: 300-600 tokens (analysis)
+  - Total: ~1300-2600 tokens per image
+  
+  **Data Extraction:**
+  - Input: 200-500 tokens
+  - Output: 100-300 tokens
+  - Total: ~300-800 tokens
+</Card>
+
+<Note>
+Images are processed efficiently using Claude's vision API. The model automatically handles image encoding and processing.
+</Note>
+
+## Rate Limits
+
+Anthropic API rate limits vary by tier. For production use:
+
+<Steps>
+  <Step title="Monitor Usage">
+    Track API calls and token consumption
+  </Step>
+  <Step title="Implement Caching">
+    Cache generated summaries to reduce redundant calls
+  </Step>
+  <Step title="Upgrade Tier">
+    Consider higher API tiers for busy hospitals
+  </Step>
+</Steps>
+
+## Future Providers
+
+While Claude is currently the only provider, the architecture supports adding more:
+
+```javascript
+// Future: OpenAI support
+app.post("/api/summarize-record/openai", async (req, res) => {
+  // OpenAI implementation
+});
+
+app.post("/api/analyze-image/openai", async (req, res) => {
+  // OpenAI vision implementation
+});
+```
+
+<Tip>
+The API uses a provider parameter in the URL path (e.g., `/claude`, `/openai`) to support multiple AI providers with the same interface.
+</Tip>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="API Key Security">
+    - Store keys in environment variables only
+    - Never commit `.env` files
+    - Use different keys for development and production
+    - Rotate keys periodically
+    - Monitor for unusual usage patterns
+  </Accordion>
+  
+  <Accordion title="Error Handling">
+    - Check if client is initialized before API calls
+    - Provide clear error messages to users
+    - Log errors for debugging
+    - Implement retry logic for transient failures
+    - Have fallback behavior when AI is unavailable
+  </Accordion>
+  
+  <Accordion title="Performance">
+    - Set appropriate `max_tokens` limits
+    - Cache frequent queries
+    - Process images at reasonable resolution
+    - Consider batch processing for multiple patients
+    - Monitor response times
+  </Accordion>
+  
+  <Accordion title="Prompt Engineering">
+    - Be specific about desired output format
+    - Emphasize critical information (tasks, safety)
+    - Provide examples in prompts when needed
+    - Use structured prompts for consistency
+    - Test prompts with diverse patient scenarios
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="503 Service Unavailable">
+    **Cause:** API key not configured
+    
+    **Solution:** Set `ANTHROPIC_API_KEY` in `.env` file and restart server
+    
+    ```bash
+    # Check .env file exists
+    ls -la .env
+    
+    # Verify key is set
+    grep ANTHROPIC_API_KEY .env
+    
+    # Restart server
+    npm run dev
+    ```
+  </Accordion>
+  
+  <Accordion title="401 Unauthorized">
+    **Cause:** Invalid or expired API key
+    
+    **Solution:** Get a new API key from Anthropic Console
+    
+    1. Visit https://console.anthropic.com/
+    2. Generate new API key
+    3. Update `.env` file
+    4. Restart server
+  </Accordion>
+  
+  <Accordion title="429 Rate Limit Exceeded">
+    **Cause:** Too many requests in short time
+    
+    **Solution:** Implement rate limiting and caching
+    
+    - Add delays between requests
+    - Cache generated summaries
+    - Upgrade API tier if needed
+  </Accordion>
+  
+  <Accordion title="Image Analysis Fails">
+    **Cause:** Image too large, wrong format, or poor quality
+    
+    **Solution:**
+    - Ensure image is under 10MB
+    - Use supported formats (JPEG, PNG)
+    - Check image quality and resolution
+    - Verify image is not corrupted
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Patient Handoff" icon="file-text" href="/features/patient-handoff">
+    Learn how AI generates handoff notes
+  </Card>
+  
+  <Card title="Image Analysis" icon="camera" href="/features/image-analysis">
+    Understand vision-based document analysis
+  </Card>
+</CardGroup>

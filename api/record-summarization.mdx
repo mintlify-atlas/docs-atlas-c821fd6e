@@ -1,0 +1,369 @@
+---
+title: Record Summarization
+description: Generate AI-powered handoff summaries from patient records
+---
+
+## POST /api/summarize-record/claude
+
+Generate a comprehensive nurse-to-nurse handoff summary from patient data using Claude AI. Supports integration with image analysis and comparison with previous handoff notes.
+
+<Note>
+  Requires `ANTHROPIC_API_KEY` in environment variables.
+</Note>
+
+### Request
+
+<ParamField body="patientData" type="object" required>
+  Complete patient record data
+  
+  <Expandable title="properties">
+    <ParamField body="name" type="string">
+      Patient name
+    </ParamField>
+    
+    <ParamField body="age" type="number">
+      Patient age
+    </ParamField>
+    
+    <ParamField body="sex" type="string">
+      Patient sex (M, F, Other)
+    </ParamField>
+    
+    <ParamField body="mrn" type="string">
+      Medical Record Number
+    </ParamField>
+    
+    <ParamField body="diagnosis" type="string">
+      Primary diagnosis
+    </ParamField>
+    
+    <ParamField body="condition" type="string">
+      Current condition or chief complaint
+    </ParamField>
+    
+    <ParamField body="medications" type="array">
+      List of active medications
+    </ParamField>
+    
+    <ParamField body="allergies" type="array">
+      List of allergies
+    </ParamField>
+    
+    <ParamField body="code_status" type="string">
+      Code status (Full Code, DNR, DNI, DNR/DNI)
+    </ParamField>
+    
+    <ParamField body="last_vitals" type="object">
+      Most recent vital signs
+    </ParamField>
+    
+    <ParamField body="tasks" type="array">
+      Array of task objects with `time`, `description`, `priority`, `type`, and `completed` fields
+    </ParamField>
+  </Expandable>
+</ParamField>
+
+<ParamField body="previousNotes" type="string">
+  Previous handoff notes for comparison. When provided, the AI will generate a "Changes Since Last Handoff" section highlighting differences.
+</ParamField>
+
+<ParamField body="imageAnalysis" type="string">
+  Analysis from `/api/analyze-image/claude`. When provided, the AI will integrate whiteboard/document information throughout the summary.
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:3001/api/summarize-record/claude \
+  -H "Content-Type: application/json" \
+  -d '{
+    "patientData": {
+      "name": "John Doe",
+      "age": 67,
+      "sex": "M",
+      "mrn": "123456",
+      "diagnosis": "Acute MI",
+      "condition": "Stable",
+      "medications": ["Aspirin 81mg", "Metoprolol 25mg"],
+      "allergies": ["Penicillin"],
+      "code_status": "Full Code",
+      "last_vitals": {
+        "bp": "142/88",
+        "hr": 78,
+        "o2sat": 96
+      },
+      "tasks": [
+        {
+          "time": "20:00",
+          "description": "Evening medications",
+          "priority": "high",
+          "type": "medication",
+          "completed": false
+        },
+        {
+          "time": "14:00",
+          "description": "Troponin draw",
+          "priority": "high",
+          "type": "lab",
+          "completed": true
+        }
+      ]
+    },
+    "previousNotes": "Patient admitted with chest pain. Troponin pending.",
+    "imageAnalysis": "Whiteboard shows BP trending down from 158/92 this morning."
+  }'
+```
+
+```javascript fetch
+const response = await fetch('http://localhost:3001/api/summarize-record/claude', {
+  method: 'POST',
+  headers: {
+    'Content-Type': 'application/json'
+  },
+  body: JSON.stringify({
+    patientData: {
+      name: 'John Doe',
+      age: 67,
+      sex: 'M',
+      mrn: '123456',
+      diagnosis: 'Acute MI',
+      tasks: [...]
+    },
+    previousNotes: 'Previous handoff text...',
+    imageAnalysis: 'Image analysis from whiteboard...'
+  })
+});
+
+const data = await response.json();
+console.log(data.summary);
+```
+
+```python Python
+import requests
+
+data = {
+    "patientData": {
+        "name": "John Doe",
+        "age": 67,
+        "sex": "M",
+        "mrn": "123456",
+        "diagnosis": "Acute MI",
+        "tasks": [
+            {
+                "time": "20:00",
+                "description": "Evening medications",
+                "priority": "high",
+                "type": "medication",
+                "completed": False
+            }
+        ]
+    },
+    "previousNotes": "Patient admitted with chest pain.",
+    "imageAnalysis": "BP trending down."
+}
+
+response = requests.post(
+    'http://localhost:3001/api/summarize-record/claude',
+    json=data
+)
+
+result = response.json()
+print(result['summary'])
+```
+
+</CodeGroup>
+
+### Response
+
+<ResponseField name="summary" type="string">
+  AI-generated handoff summary with:
+  - Changes since last handoff (if `previousNotes` provided)
+  - Patient overview and Shift-Level Forecast
+  - Current clinical status and vital signs
+  - Key lab/imaging findings with trends
+  - Active medications and treatments
+  - Task status (completed and outstanding by priority)
+  - Safety concerns
+  - Integration of image analysis data (if provided)
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  AI provider used. Always returns `"claude"` for this endpoint.
+</ResponseField>
+
+### Response Example
+
+<CodeGroup>
+
+```json Success Response
+{
+  "summary": "## Changes Since Last Handoff\n\n**COMPLETED:** Troponin draw (14:00)\n**CHANGED:** BP improved from 158/92 to 142/88 (IMAGE UPDATE: confirmed on whiteboard)\n**NEW:** Evening medications due at 20:00\n\n## Patient Overview\n\nJohn Doe, 67M, MRN: 123456\nDiagnosis: Acute MI\nRoom: 401A\n\n## Current Clinical Status\n\nVitals (Current):\n- BP: 142/88 (↓ from 158/92 - IMPROVING)\n- HR: 78\n- SpO2: 96%\n\nTrend Analysis: Blood pressure showing positive response to treatment\n\n## Active Medications\n\n- Aspirin 81mg daily\n- Metoprolol 25mg BID\n\n## Task Status\n\n### Critical Priority\n⚠ 00:00 - Repeat troponin (CRITICAL)\n\n### High Priority\n⚠ 20:00 - Evening medications\n\n### Completed This Shift\n✓ 14:00 - Troponin draw (HIGH priority, lab)\n\n## Shift-Level Forecast\n\n⛈️ High workload at midnight\n- Troponin results expected\n- Possible MD notification needed\n\n☀️ Stable period 02:00-06:00\n\n## Safety Concerns\n\n- Allergies: Penicillin\n- Code Status: Full Code\n- Fall Risk: Assess on entry",
+  "provider": "claude"
+}
+```
+
+```json Error - No Patient Data
+{
+  "error": "No patient data provided"
+}
+```
+
+```json Error - Service Unavailable
+{
+  "error": "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file."
+}
+```
+
+</CodeGroup>
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  **Missing patient data**
+  ```json
+  {
+    "error": "No patient data provided"
+  }
+  ```
+</Expandable>
+
+<Expandable title="500 Internal Server Error">
+  **Claude API error**
+  ```json
+  {
+    "error": "Failed to summarize record with Claude",
+    "details": "API error message"
+  }
+  ```
+</Expandable>
+
+<Expandable title="503 Service Unavailable">
+  **Claude not configured**
+  ```json
+  {
+    "error": "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file."
+  }
+  ```
+</Expandable>
+
+## Features
+
+### Task Analysis
+
+The endpoint automatically analyzes tasks in the patient data:
+
+- **Separates completed vs. pending tasks**
+- **Organizes by priority**: Critical → High → Medium → Low
+- **Highlights time-sensitive tasks**
+- **Shows task completion metrics**
+
+Task fields used:
+- `time`: Scheduled time
+- `description`: Task description
+- `priority`: critical, high, medium, low
+- `type`: medication, lab, vitals, imaging, etc.
+- `completed`: boolean
+
+### Integration with Image Analysis
+
+When `imageAnalysis` is provided:
+
+- **Merges whiteboard data** with electronic records
+- **Prioritizes recent information** from images
+- **Prefixes conflicts** with `**IMAGE UPDATE:**`
+- **Weaves naturally** into appropriate sections (not separate)
+- **Cross-references** between sources
+
+### Comparison with Previous Notes
+
+When `previousNotes` is provided:
+
+- **Generates "Changes Since Last Handoff" section**
+- **Highlights differences** with prefixes:
+  - `**CHANGED:**` - Modified information
+  - `**NEW:**` - New items
+  - `**RESOLVED:**` - Issues now resolved
+  - `**COMPLETED:**` - Tasks finished
+
+### Trend Highlighting
+
+Emphasis on clinical trends:
+- Vital sign changes (↑ increasing, ↓ decreasing)
+- Lab value trajectories
+- Condition progression
+- Response to treatments
+
+### Shift-Level Forecast
+
+Includes workload prediction:
+- ⛈️ **High workload periods** with reasons
+- ☀️ **Stable periods** for planning
+- **Clustered events**: Meds + labs + vitals
+- **Timeline visualization** concept
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Comprehensive Patient Data">
+    Include all available fields in `patientData`:
+    - Complete medication lists with dosages
+    - All known allergies
+    - Recent vital signs history (not just latest)
+    - Detailed task list with accurate priorities
+    - Admission date and diagnosis
+  </Accordion>
+  
+  <Accordion title="Task Management">
+    Ensure tasks include:
+    - Accurate `completed` status
+    - Realistic priorities (critical, high, medium, low)
+    - Specific times (24-hour format)
+    - Clear descriptions
+    - Task type classification
+  </Accordion>
+  
+  <Accordion title="Combining Features">
+    For best results, combine all three parameters:
+    
+    1. First, call `/api/analyze-image/claude` with whiteboard photo
+    2. Retrieve `patientData` from your database
+    3. Get `previousNotes` from last handoff
+    4. Send all three to `/api/summarize-record/claude`
+    
+    This creates comprehensive, context-aware handoffs.
+  </Accordion>
+  
+  <Accordion title="Handoff Workflow">
+    Typical integration flow:
+    
+    ```javascript
+    // 1. Analyze whiteboard image
+    const imageResult = await analyzeImage(whiteboardPhoto);
+    
+    // 2. Get patient data from database
+    const patientData = await getPatient(mrn);
+    
+    // 3. Get previous handoff notes
+    const previousNotes = patientData.handoff_notes;
+    
+    // 4. Generate new summary
+    const summary = await summarizeRecord({
+      patientData,
+      previousNotes,
+      imageAnalysis: imageResult.summary
+    });
+    
+    // 5. Save new handoff
+    await saveHandoff(mrn, summary.summary, imageResult.summary);
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## OpenAI Endpoint
+
+<Note>
+  The OpenAI endpoint `/api/summarize-record/openai` is not currently implemented in the source code.
+  Only Claude is supported at this time.
+</Note>

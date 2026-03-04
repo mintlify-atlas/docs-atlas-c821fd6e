@@ -1,0 +1,357 @@
+---
+title: Nurse Accounts
+description: Create and manage nurse authentication accounts for the Nurse Handoff Helper
+---
+
+## Overview
+
+The Nurse Handoff Helper requires nurse accounts to be created in both the database and Supabase Auth. This guide explains how to create and manage these accounts using the provided CLI scripts.
+
+<Info>
+  The application includes automated scripts to simplify nurse account creation and management. These scripts handle both database records and authentication accounts.
+</Info>
+
+## Prerequisites
+
+Before creating nurse accounts, ensure:
+
+- Supabase database is set up with the `nurses` table
+- Environment variables are configured, especially `SUPABASE_SERVICE_KEY`
+- You have the service role key (required for creating auth accounts)
+
+<Warning>
+  The `SUPABASE_SERVICE_KEY` is required for creating authentication accounts. Without it, you can only list existing nurses.
+</Warning>
+
+## Available Commands
+
+The application provides npm scripts for managing nurse accounts:
+
+```bash
+# List all nurses in the database
+npm run nurses:list
+
+# Create authentication accounts for nurses
+npm run nurses:create
+
+# List nurse credentials (if applicable)
+npm run nurses:credentials
+
+# Check authentication status
+npm run nurses:check
+
+# Reset nurse passwords
+npm run nurses:reset-passwords
+
+# Test login functionality
+npm run test:login
+```
+
+## List Existing Nurses
+
+To view all nurses in your database:
+
+```bash
+npm run nurses:list
+```
+
+This command will display:
+
+- Nurse name
+- Email address
+- Database ID
+- Authentication account status (linked or not linked)
+
+### Example Output
+
+```
+📋 Fetching nurses from database...
+
+Found 3 nurse(s):
+
+1. Emily Chen
+   Email: emily.chen@hospital.org
+   ID: 550e8400-e29b-41d4-a716-446655440001
+   Auth Account: ✅ Linked
+
+2. Michael Rodriguez
+   Email: michael.rodriguez@hospital.org
+   ID: 550e8400-e29b-41d4-a716-446655440002
+   Auth Account: ❌ Not linked
+
+3. Sarah Williams
+   Email: sarah.williams@hospital.org
+   ID: 550e8400-e29b-41d4-a716-446655440003
+   Auth Account: ❌ Not linked
+
+📊 Summary:
+   ✅ 1 nurse(s) with auth accounts
+   ❌ 2 nurse(s) without auth accounts
+```
+
+## Create Authentication Accounts
+
+To create Supabase Auth accounts for nurses in your database:
+
+```bash
+npm run nurses:create
+```
+
+This script (`scripts/setup-nurse-accounts.js:76`):
+
+1. Fetches all nurses from the database
+2. Skips nurses who already have auth accounts
+3. Generates email addresses if missing (format: `firstname.lastname@hospital.org`)
+4. Creates Supabase Auth accounts with temporary passwords
+5. Links the auth account to the nurse record
+6. Displays temporary passwords for each new account
+
+### How It Works
+
+<Steps>
+  <Step title="Fetch Nurses">
+    The script retrieves all nurse records from the `nurses` table.
+  </Step>
+  
+  <Step title="Check Existing Accounts">
+    For each nurse, it checks if they already have an `auth_user_id` linked.
+    If yes, the nurse is skipped.
+  </Step>
+  
+  <Step title="Generate Email">
+    If a nurse doesn't have an email, the script generates one:
+    ```javascript
+    // Example: "Emily Chen" becomes "emily.chen@hospital.org"
+    const emailName = nurse.name
+      .toLowerCase()
+      .replace(/[^a-z\s]/g, '')
+      .split(/\s+/)
+      .join('.');
+    const nurseEmail = `${emailName}@hospital.org`;
+    ```
+  </Step>
+  
+  <Step title="Create Auth Account">
+    Creates a Supabase Auth user with:
+    - Email address
+    - Temporary password (`Temp{nurse_id}{timestamp}`)
+    - Auto-confirmed email
+    - User metadata (name and nurse_id)
+    
+    ```javascript
+    const { data: authUser, error } = await supabaseAdmin.auth.admin.createUser({
+      email: nurseEmail,
+      password: tempPassword,
+      email_confirm: true,
+      user_metadata: {
+        name: nurse.name,
+        nurse_id: nurse.id,
+      },
+    });
+    ```
+  </Step>
+  
+  <Step title="Link Accounts">
+    Updates the nurse record with the auth user ID:
+    ```javascript
+    await supabase
+      .from('nurses')
+      .update({ auth_user_id: authUser.user.id })
+      .eq('id', nurse.id);
+    ```
+  </Step>
+</Steps>
+
+### Example Output
+
+```
+🔐 Creating auth accounts for nurses...
+
+Results:
+
+✅ Created accounts:
+   Emily Chen (emily.chen@hospital.org)
+   Password: Temp550e84001709123456
+   
+   Michael Rodriguez (michael.rodriguez@hospital.org)
+   Password: Temp550e84021709123457
+
+🔗 Linked existing accounts:
+   Sarah Williams (sarah.williams@hospital.org)
+
+⏭️  Skipped (already have accounts):
+   John Doe (john.doe@hospital.org)
+
+📊 Summary:
+   ✅ Created: 2
+   🔗 Linked: 1
+   ⏭️  Skipped: 1
+   ❌ Errors: 0
+
+💡 Nurses can now log in with their email and the temporary password shown above.
+   They should change their password after first login.
+```
+
+## Adding Nurses to Database
+
+Before creating auth accounts, you need to add nurse records to the database. You can do this via:
+
+### Option 1: Supabase Dashboard
+
+1. Go to your Supabase project
+2. Navigate to **Table Editor** → **nurses**
+3. Click **Insert row**
+4. Fill in:
+   - **name**: Full name (required)
+   - **email**: Email address (optional, will be auto-generated)
+5. Click **Save**
+
+### Option 2: SQL Insert
+
+```sql
+INSERT INTO nurses (name, email) VALUES
+  ('Emily Chen', 'emily.chen@hospital.org'),
+  ('Michael Rodriguez', 'michael.rodriguez@hospital.org'),
+  ('Sarah Williams', 'sarah.williams@hospital.org');
+```
+
+### Option 3: API Endpoint
+
+The application automatically creates nurse records during first login if they don't exist (`server/index.js:35`).
+
+## Password Management
+
+### Temporary Passwords
+
+When accounts are created, they receive temporary passwords in the format:
+
+```
+Temp{nurse_id}{timestamp}
+```
+
+Example: `Temp550e84001709123456`
+
+<Warning>
+  Save these passwords securely and provide them to nurses through a secure channel. They are only displayed once during account creation.
+</Warning>
+
+### First Login Flow
+
+1. Nurse logs in with email and temporary password
+2. Application authenticates via Supabase Auth
+3. Nurse should be prompted to change password (implement this in your frontend)
+
+### Resetting Passwords
+
+To reset nurse passwords:
+
+```bash
+npm run nurses:reset-passwords
+```
+
+Or use the Supabase dashboard:
+
+1. Go to **Authentication** → **Users**
+2. Find the nurse's auth account
+3. Click **...** → **Reset password**
+4. Send reset email or set new password manually
+
+## Account Linking
+
+The script handles three scenarios:
+
+<CardGroup cols={3}>
+  <Card title="New Account" icon="user-plus">
+    No auth account exists. Creates new Supabase Auth user and links it.
+  </Card>
+  <Card title="Existing Account" icon="link">
+    Auth account exists but not linked. Links existing auth user to nurse record.
+  </Card>
+  <Card title="Already Linked" icon="check">
+    Nurse already has auth_user_id. Skips creation.
+  </Card>
+</CardGroup>
+
+## API Endpoint for Account Creation
+
+You can also create accounts programmatically via the API endpoint (`server/index.js:580`):
+
+```bash
+POST /api/nurses/create-accounts
+```
+
+### Request
+
+```bash
+curl -X POST http://localhost:3001/api/nurses/create-accounts
+```
+
+### Response
+
+```json
+{
+  "success": true,
+  "message": "Processed 3 nurses",
+  "results": [
+    {
+      "nurse_id": "550e8400-e29b-41d4-a716-446655440001",
+      "email": "emily.chen@hospital.org",
+      "status": "created",
+      "message": "Account created. Temporary password: Temp550e84001709123456",
+      "tempPassword": "Temp550e84001709123456"
+    }
+  ]
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Error: SUPABASE_SERVICE_KEY is required">
+    The service role key is required to create auth accounts. Add it to your `.env` file:
+    
+    ```bash
+    SUPABASE_SERVICE_KEY=your_service_role_key_here
+    ```
+    
+    Get it from **Project Settings** → **API** → **service_role** in Supabase dashboard.
+  </Accordion>
+  
+  <Accordion title="Error: No nurses found in database">
+    You need to add nurses to the `nurses` table first. Use one of the methods described in "Adding Nurses to Database" above.
+  </Accordion>
+  
+  <Accordion title="Error: Email already exists">
+    If you see "User with this email already exists", the script will attempt to link the existing auth user to the nurse record instead of creating a new one.
+  </Accordion>
+  
+  <Accordion title="Account created but failed to link">
+    This error indicates the auth account was created successfully but couldn't be linked to the nurse record. You may need to manually update the `auth_user_id` in the nurses table.
+  </Accordion>
+</AccordionGroup>
+
+## Security Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Change Default Passwords" icon="key">
+    Ensure nurses change their temporary passwords on first login.
+  </Card>
+  <Card title="Use Strong Passwords" icon="shield-check">
+    Implement password strength requirements in your authentication flow.
+  </Card>
+  <Card title="Secure Credential Sharing" icon="lock">
+    Share temporary passwords through secure channels (not email or Slack).
+  </Card>
+  <Card title="Regular Audits" icon="clipboard-check">
+    Periodically review nurse accounts and remove inactive users.
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+After creating nurse accounts:
+
+1. Test login functionality with `npm run test:login`
+2. Start the application with `npm start`
+3. Have nurses log in and change their passwords
+4. Assign nurses to rooms and patients

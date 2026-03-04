@@ -1,0 +1,644 @@
+---
+title: Editing and Saving Handoff Notes
+description: Complete guide to editing, customizing, and saving handoff notes
+icon: floppy-disk
+---
+
+After generating handoff notes, you can edit them to add context, clarify information, or customize for your specific workflow. This guide covers all editing and saving functionality.
+
+## Viewing Generated Notes
+
+Once handoff notes are generated, they appear in the right panel of the patient detail view.
+
+### Formatted Display
+
+Notes are displayed in an easy-to-read format:
+
+<CardGroup cols={2}>
+  <Card title="Clear Structure" icon="sitemap">
+    Sections are visually separated with headers and spacing
+  </Card>
+  
+  <Card title="Readable Typography" icon="font">
+    Proper line spacing, font sizes, and contrast for easy scanning
+  </Card>
+  
+  <Card title="Preserved Formatting" icon="align-left">
+    Bullet points, lists, and sections maintain their structure
+  </Card>
+  
+  <Card title="Timestamps" icon="clock">
+    Last update timestamp displayed in the header
+  </Card>
+</CardGroup>
+
+### Note Header Actions
+
+The header bar above the notes includes several action buttons:
+
+<Tabs>
+  <Tab title="Edit Notes">
+    **Icon**: Pencil (Edit3)
+    
+    Switches to edit mode, converting the formatted display into an editable text area.
+    
+    <Tip>
+      Click "Edit Notes" to modify any part of the generated content.
+    </Tip>
+  </Tab>
+  
+  <Tab title="Copy">
+    **Icon**: Copy
+    
+    Copies the entire handoff note to your clipboard for pasting into:
+    - External documentation systems
+    - Email or messaging platforms
+    - Printed handoff sheets
+    - Other applications
+    
+    **Feedback**: Button text changes to "Copied!" for 2 seconds after clicking.
+    
+    <Note>
+      The copy function preserves formatting including line breaks and sections.
+    </Note>
+  </Tab>
+  
+  <Tab title="Save Changes">
+    **Icon**: Save/Loading spinner
+    
+    Appears when in edit mode. Saves your modifications to the database.
+    
+    **States**:
+    - Ready: "Save Changes" button
+    - Saving: "Saving..." with spinner
+    - Success: Green success message appears
+  </Tab>
+  
+  <Tab title="Cancel">
+    Appears when in edit mode. Discards any unsaved changes and returns to formatted view.
+    
+    <Warning>
+      Clicking Cancel will discard all edits since entering edit mode. There is no undo.
+    </Warning>
+  </Tab>
+</Tabs>
+
+## Editing Handoff Notes
+
+Edit mode allows you to customize the generated notes to fit your needs.
+
+<Steps>
+
+### Enter Edit Mode
+
+1. Click the **"Edit Notes"** button in the notes header
+2. The formatted display transforms into a text area
+3. All content becomes editable
+4. "Save Changes" and "Cancel" buttons appear
+
+<Note>
+  The edit button has a pencil icon for easy identification.
+</Note>
+
+### Make Your Edits
+
+The text area provides full control over the note content:
+
+**What You Can Edit:**
+
+<AccordionGroup>
+  <Accordion title="Add Details">
+    Insert additional information not captured in the patient record:
+    - Behavioral observations
+    - Patient/family preferences
+    - Communication considerations
+    - Social situation factors
+    - Specific care instructions
+    
+    **Example additions**:
+    ```
+    Family Involvement: Daughter (Jane) is primary contact,
+    calls daily around 7 PM, prefers updates via phone.
+    
+    Patient Preferences: Prefers morning medications with orange
+    juice, dislikes being woken before 6 AM.
+    ```
+  </Accordion>
+  
+  <Accordion title="Clarify Information">
+    Expand on automated content with context:
+    - Explain unusual vital sign readings
+    - Provide rationale for treatment decisions
+    - Clarify medication changes
+    - Note expected vs. unexpected findings
+    
+    **Example clarifications**:
+    ```
+    BP: Currently 158/92 (elevated from baseline 130/80).
+    Patient admitted running out of home BP meds. Started on
+    increased dose today, monitor response.
+    ```
+  </Accordion>
+  
+  <Accordion title="Reorganize Content">
+    Adjust structure to match your workflow:
+    - Reorder sections for logical flow
+    - Group related information together
+    - Move urgent items to top
+    - Add section headers
+    
+    <Tip>
+      While the AI generates SBAR format, you can reorganize as needed for your facility's standards.
+    </Tip>
+  </Accordion>
+  
+  <Accordion title="Remove Redundancy">
+    Delete unnecessary or repetitive information:
+    - Remove outdated information
+    - Eliminate duplicate details
+    - Trim verbose descriptions
+    - Focus on what's actionable
+  </Accordion>
+  
+  <Accordion title="Emphasize Key Points">
+    Highlight critical information:
+    - Add ALERT: or CRITICAL: prefixes
+    - Use capital letters for emphasis
+    - Add *** markers for urgent items
+    - Repeat critical allergies or precautions
+    
+    **Example emphasis**:
+    ```
+    *** CRITICAL: Patient is a FALL RISK - requires
+    assistance with all mobility ***
+    
+    ALLERGY ALERT: PENICILLIN - causes anaphylaxis
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Editing Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Be Concise" icon="minimize">
+    Keep notes focused on essential handoff information. Avoid lengthy narratives.
+  </Card>
+  
+  <Card title="Use Clear Language" icon="font">
+    Avoid jargon or abbreviations that might be unclear to the receiving nurse.
+  </Card>
+  
+  <Card title="Prioritize Safety" icon="shield">
+    Ensure critical safety information (allergies, fall risk, code status) is prominent.
+  </Card>
+  
+  <Card title="Include Context" icon="lightbulb">
+    Add "why" to the "what" - explain reasoning for care decisions.
+  </Card>
+  
+  <Card title="Check Accuracy" icon="magnifying-glass">
+    Verify all times, dosages, and medical details before saving.
+  </Card>
+  
+  <Card title="Think Ahead" icon="forward">
+    Anticipate questions the next nurse might have and address them.
+  </Card>
+</CardGroup>
+
+### Text Area Features
+
+**Editing Interface:**
+
+<ResponseField name="Full content access" type="text area">
+  All note content is editable - no locked sections
+</ResponseField>
+
+<ResponseField name="Line breaks preserved" type="formatting">
+  Press Enter to create new lines and paragraphs
+</ResponseField>
+
+<ResponseField name="Auto-sizing" type="layout">
+  Text area expands/contracts based on content length
+</ResponseField>
+
+<ResponseField name="Placeholder text" type="helper">
+  Shows "Edit your handoff notes here..." if notes are empty
+</ResponseField>
+
+### Exit Edit Mode
+
+You have two options when finished editing:
+
+<Tabs>
+  <Tab title="Save Changes">
+    1. Review your edits for accuracy
+    2. Click **"Save Changes"** button
+    3. Loading spinner appears with "Saving..." text
+    4. Success message confirms save: "Handoff notes saved successfully!"
+    5. Notes return to formatted display
+    6. Edit button becomes available again
+    
+    **Save Process:**
+    - Changes are saved to the database immediately
+    - All users can see updated notes
+    - Timestamp updates to current time
+    - Previous version retained in audit log
+    
+    <Info>
+      Saved notes are immediately available to all nurses viewing this patient's record.
+    </Info>
+  </Tab>
+  
+  <Tab title="Cancel Changes">
+    1. Click **"Cancel"** button
+    2. All edits since entering edit mode are discarded
+    3. Notes revert to last saved version
+    4. Returns to formatted display
+    
+    <Warning>
+      There is no "Are you sure?" confirmation. Clicking Cancel immediately discards all edits.
+    </Warning>
+    
+    **When to Cancel:**
+    - Made edits by mistake
+    - Realized you're viewing wrong patient
+    - Want to start over with fresh AI generation
+    - System is unresponsive and you want to exit
+  </Tab>
+</Tabs>
+
+</Steps>
+
+## Auto-Save Behavior
+
+The system includes automatic saving in specific scenarios:
+
+### When Auto-Save Occurs
+
+<CardGroup cols={2}>
+  <Card title="After AI Generation" icon="sparkles">
+    Newly generated notes are automatically saved without requiring manual save action
+  </Card>
+  
+  <Card title="After Image Integration" icon="camera">
+    Notes regenerated with image analysis are auto-saved when complete
+  </Card>
+</CardGroup>
+
+**What is NOT Auto-Saved:**
+- Manual edits in edit mode
+- Partial edits while still typing
+- Draft changes before clicking Save
+
+<Note>
+  You must click "Save Changes" to save manual edits. The system will not save in-progress edits automatically.
+</Note>
+
+### Save Confirmation
+
+After any save (manual or automatic), you'll see:
+
+<Steps>
+  <Step title="Success Message">
+    Green success banner appears with checkmark icon
+  </Step>
+  
+  <Step title="Confirmation Text">
+    "Handoff notes saved successfully!" or "Handoff notes generated and saved successfully!"
+  </Step>
+  
+  <Step title="Auto-Dismiss">
+    Success message fades after 3 seconds
+  </Step>
+  
+  <Step title="Timestamp Update">
+    Last updated timestamp reflects current save time
+  </Step>
+</Steps>
+
+## Copy to Clipboard
+
+The copy function allows you to use generated notes in other systems.
+
+<Steps>
+
+### Copy Notes
+
+1. Click the **"Copy"** button in the notes header
+2. Button text changes to "Copied!" for 2 seconds
+3. Full note content is now on your clipboard
+4. Button returns to showing "Copy" after 2 seconds
+
+### Paste Notes
+
+Notes can be pasted into:
+- Electronic Health Record (EHR) systems
+- Email clients for provider communication
+- Printed handoff sheets
+- Messaging apps (HIPAA-compliant only!)
+- Documentation templates
+- Shift reports
+
+<Warning>
+  Be mindful of HIPAA regulations when pasting patient information outside of secure systems. Never paste into personal email, public messaging, or unsecured applications.
+</Warning>
+
+### Formatting Preservation
+
+When copying:
+- Line breaks are preserved
+- Section headers remain intact
+- Bullet points may convert to plain text (depends on destination)
+- Special characters are maintained
+
+</Steps>
+
+## Handling Errors
+
+Understand what happens when things go wrong:
+
+### Save Errors
+
+<AccordionGroup>
+  <Accordion title="Error: Failed to save handoff notes">
+    **Causes**:
+    - Network connectivity issue
+    - Database temporarily unavailable
+    - Session expired
+    - Insufficient permissions
+    
+    **Display**: Red error banner with alert icon and error message
+    
+    **Solutions**:
+    1. Check network connection
+    2. Verify you're still logged in
+    3. Wait 30 seconds and click Save again
+    4. Copy notes to clipboard as backup
+    5. Contact IT if issue persists
+    
+    <Tip>
+      Your edits remain in the text area even after an error, so you won't lose your work.
+    </Tip>
+  </Accordion>
+  
+  <Accordion title="Error: Patient ID not found">
+    **Causes**:
+    - Patient record was deleted or merged
+    - Database synchronization issue
+    - Corrupted patient identifier
+    
+    **Solutions**:
+    1. Return to patient list
+    2. Locate patient again
+    3. Re-enter patient detail view
+    4. Try saving again
+    5. Report to IT if patient cannot be found
+  </Accordion>
+  
+  <Accordion title="Error: Session expired">
+    **Causes**:
+    - Been logged in too long without activity
+    - Security timeout reached
+    - Concurrent login from another device
+    
+    **Solutions**:
+    1. Copy notes to clipboard immediately
+    2. Log in again
+    3. Navigate back to patient
+    4. Paste notes into edit mode
+    5. Save again
+  </Accordion>
+</AccordionGroup>
+
+### Prevention Strategies
+
+<CardGroup cols={2}>
+  <Card title="Save Frequently" icon="floppy-disk">
+    Don't wait until you've made extensive edits. Save after each significant change.
+  </Card>
+  
+  <Card title="Copy Before Saving" icon="copy">
+    Use Copy button before Save as a backup in case save fails.
+  </Card>
+  
+  <Card title="Check Connection" icon="wifi">
+    Ensure stable network connection before entering edit mode.
+  </Card>
+  
+  <Card title="Stay Logged In" icon="user-check">
+    Periodically interact with the system to prevent session timeout.
+  </Card>
+</CardGroup>
+
+## Working with Multiple Patients
+
+When creating handoff notes for multiple patients:
+
+### Efficient Workflow
+
+<Steps>
+  <Step title="Prioritize by Risk">
+    Start with critical and high-risk patients first
+  </Step>
+  
+  <Step title="Generate All Notes First">
+    Generate AI notes for all patients before starting detailed edits
+  </Step>
+  
+  <Step title="Review and Edit">
+    Go through each patient to review and customize notes
+  </Step>
+  
+  <Step title="Final Check">
+    Do a final pass 15 minutes before shift end to catch any updates
+  </Step>
+</Steps>
+
+### Navigation Tips
+
+<CardGroup cols={2}>
+  <Card title="Back Button" icon="arrow-left">
+    Use "Back to Patient List" to return to dashboard
+  </Card>
+  
+  <Card title="Filter Persistence" icon="filter">
+    Dashboard filters remain active when you return
+  </Card>
+  
+  <Card title="Quick Selection" icon="mouse-pointer">
+    Click next patient card immediately - no need to regenerate previous notes
+  </Card>
+  
+  <Card title="Browser Tabs" icon="browser">
+    Open multiple patient records in separate tabs if needed (some browsers)
+  </Card>
+</CardGroup>
+
+## Timestamp and Audit Trail
+
+Every save creates a record for accountability:
+
+### Last Updated Timestamp
+
+<ResponseField name="lastHandoffUpdate" type="ISO 8601 datetime">
+  Automatically set each time notes are saved
+</ResponseField>
+
+Displayed in patient detail view showing:
+- Date of last update
+- Time of last update
+- Optionally: User who made the update
+
+### Audit Logging
+
+The system maintains audit logs recording:
+- When notes were generated
+- When notes were edited
+- When notes were saved
+- User who performed each action
+- Previous versions of notes
+
+<Info>
+  Audit logs ensure accountability and allow recovery of previous note versions if needed. Contact your administrator to access audit history.
+</Info>
+
+## Keyboard Shortcuts
+
+While in edit mode:
+
+<ParamField path="Ctrl/Cmd + S" type="shortcut">
+  **Save Changes** - Saves notes without clicking Save button (may not work in all browsers)
+</ParamField>
+
+<ParamField path="Esc" type="shortcut">
+  **Exit Edit Mode** - Same as clicking Cancel (may not work in all browsers)
+</ParamField>
+
+<ParamField path="Ctrl/Cmd + A" type="shortcut">
+  **Select All** - Select all text in notes area
+</ParamField>
+
+<ParamField path="Ctrl/Cmd + C" type="shortcut">
+  **Copy** - Copy selected text (use Copy button to copy all)
+</ParamField>
+
+<Note>
+  Keyboard shortcut support varies by browser and operating system. The on-screen buttons always work reliably.
+</Note>
+
+## Best Practices Summary
+
+<AccordionGroup>
+  <Accordion title="Before Editing">
+    - Review generated notes thoroughly first
+    - Identify what needs to be added or changed
+    - Verify all patient data is current
+    - Check that tasks are marked correctly
+  </Accordion>
+  
+  <Accordion title="During Editing">
+    - Keep notes concise and relevant
+    - Focus on critical safety information
+    - Add context the AI couldn't capture
+    - Maintain clear, professional language
+    - Structure for easy scanning
+  </Accordion>
+  
+  <Accordion title="After Editing">
+    - Proofread for accuracy
+    - Verify all times and dosages
+    - Ensure critical alerts are prominent
+    - Save changes promptly
+    - Confirm success message appears
+  </Accordion>
+  
+  <Accordion title="Before Shift End">
+    - Review all patient notes one final time
+    - Update any changes from last hour
+    - Ensure outstanding tasks are current
+    - Copy notes if needed for verbal handoff
+    - Confirm all notes are saved
+  </Accordion>
+</AccordionGroup>
+
+## Troubleshooting Common Issues
+
+<AccordionGroup>
+  <Accordion title="Edits aren't saving">
+    **Symptoms**: Click Save but notes don't update
+    
+    **Check**:
+    1. Is error message displayed?
+    2. Is network connection stable?
+    3. Are you still logged in?
+    4. Is Save button showing "Saving..."?
+    
+    **Try**:
+    - Copy notes to clipboard as backup
+    - Wait for any loading to complete
+    - Try Save button again
+    - Refresh page and check if notes saved
+    - Log out and back in
+  </Accordion>
+  
+  <Accordion title="Copy button not working">
+    **Symptoms**: Click Copy but nothing happens or paste doesn't work
+    
+    **Causes**:
+    - Browser clipboard permissions denied
+    - Browser security restrictions
+    - Extensions blocking clipboard access
+    
+    **Solutions**:
+    1. Check browser clipboard permissions
+    2. Try different browser
+    3. Manually select all text and copy (Ctrl/Cmd+C)
+    4. Disable conflicting browser extensions
+  </Accordion>
+  
+  <Accordion title="Lost edits after clicking Cancel">
+    **Issue**: Accidentally clicked Cancel and lost extensive edits
+    
+    **Prevention**:
+    - Save frequently during long editing sessions
+    - Copy notes to clipboard before canceling if unsure
+    - Be careful where you click - Cancel is near Save
+    
+    **Recovery**:
+    Unfortunately, there's no undo for canceled edits. You'll need to:
+    1. Re-enter edit mode
+    2. Make edits again
+    3. Or regenerate notes and re-customize
+  </Accordion>
+  
+  <Accordion title="Notes showing old information">
+    **Symptoms**: Notes don't reflect recent patient changes
+    
+    **Causes**:
+    - Viewing cached version
+    - Notes haven't been regenerated
+    - Database not yet updated
+    
+    **Solutions**:
+    1. Regenerate notes to pull latest data
+    2. Refresh browser page
+    3. Check timestamp to see when notes were last updated
+    4. Manually edit to add recent changes
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Complete Workflow" icon="workflow" href="/guide/workflow">
+    See how editing fits into the full handoff process
+  </Card>
+  
+  <Card title="Generating Notes" icon="sparkles" href="/guide/generating-notes">
+    Learn how to generate high-quality initial notes
+  </Card>
+  
+  <Card title="Patient Records" icon="folder-open" href="/guide/patient-records">
+    Manage patient information for accurate note generation
+  </Card>
+</CardGroup>

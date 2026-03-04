@@ -1,0 +1,275 @@
+---
+title: Complete Patient Handoff Workflow
+description: Step-by-step guide to managing patient handoffs from start to finish
+icon: workflow
+---
+
+This guide walks you through the complete patient handoff workflow in the Nurse Handoff Helper application, from accessing the dashboard to generating and saving handoff notes.
+
+## Overview
+
+The patient handoff process follows these main stages:
+
+1. **Dashboard Access** - View all active patients and their risk levels
+2. **Patient Selection** - Choose a patient to create handoff notes
+3. **Information Review** - Review patient details, vitals, and tasks
+4. **Note Generation** - Generate AI-powered handoff notes
+5. **Review and Edit** - Review and customize the generated notes
+6. **Save and Distribute** - Save notes for the next shift
+
+<Steps>
+
+### Step 1: Access the Handoff Dashboard
+
+When you log in, you'll see the main Handoff Dashboard with an overview of all active patients.
+
+**Dashboard Features:**
+- **Active Rooms**: Total number of occupied rooms with patients
+- **Critical Count**: Number of patients with critical risk level
+- **High Risk Count**: Number of patients with high risk level
+
+**Available Views:**
+<Tabs>
+  <Tab title="Rooms View">
+    Grid view showing all patient rooms with quick status indicators
+  </Tab>
+  <Tab title="Tasks View">
+    Comprehensive task list across all patients
+  </Tab>
+  <Tab title="Route View">
+    Map showing optimal route through patient rooms
+  </Tab>
+  <Tab title="Schedule View">
+    Nurse schedule and assignments for the shift
+  </Tab>
+  <Tab title="Logs View">
+    Activity logs and handoff history
+  </Tab>
+</Tabs>
+
+### Step 2: Filter and Select a Patient
+
+**Filtering Options:**
+
+<AccordionGroup>
+  <Accordion title="Filter by Assignment">
+    Click the **"My Patients"** button to show only rooms assigned to you. This is particularly useful when you have multiple nurses on the same floor.
+  </Accordion>
+  
+  <Accordion title="Filter by Risk Level">
+    Use the risk level dropdown to filter patients:
+    - **All Risk Levels** - Show all patients
+    - **Critical** - Life-threatening conditions requiring immediate attention
+    - **High** - Serious conditions requiring close monitoring
+    - **Medium** - Stable but requiring regular care
+    - **Low** - Stable patients with minimal intervention needed
+  </Accordion>
+</AccordionGroup>
+
+**Selecting a Patient:**
+- Click on any patient room card to open their detailed view
+- Each card shows:
+  - Patient name, age, and sex
+  - Room number
+  - Current diagnosis or chief complaint
+  - Risk level indicator
+  - Last vital signs
+  - Assigned nurse
+
+### Step 3: Review Patient Information
+
+Once you select a patient, you'll see a comprehensive view with two columns:
+
+**Left Column - Patient Information:**
+
+<CardGroup cols={2}>
+  <Card title="Demographics" icon="user">
+    - Full name
+    - Age and sex
+    - Medical record number (MRN)
+    - Room number
+  </Card>
+  
+  <Card title="Clinical Details" icon="heart-pulse">
+    - Chief complaint
+    - Code status
+    - Medical history
+    - Current diagnosis
+  </Card>
+  
+  <Card title="Vital Signs" icon="activity">
+    - Temperature
+    - Heart rate
+    - Blood pressure
+    - Respiratory rate
+    - Oxygen saturation
+  </Card>
+  
+  <Card title="Task Status" icon="list-checks">
+    - Completed tasks this shift
+    - Outstanding tasks
+    - Task priorities
+    - Scheduled task times
+  </Card>
+</CardGroup>
+
+<Note>
+  Patient information updates in real-time. Any changes made by other nurses or systems are automatically reflected in your view.
+</Note>
+
+### Step 4: Generate Handoff Notes
+
+The right column contains the handoff note generation tools.
+
+**Generation Options:**
+
+<Tabs>
+  <Tab title="Generate from Record">
+    Click **"Generate from Record"** to create AI-powered handoff notes based on:
+    - Patient demographics and medical history
+    - Current chief complaint and diagnosis
+    - Latest vital signs
+    - Medications and allergies
+    - Task status (completed and outstanding)
+    - Previous handoff notes (for continuity)
+    
+    The AI will synthesize all this information into a structured handoff note following SBAR (Situation, Background, Assessment, Recommendation) format.
+  </Tab>
+  
+  <Tab title="Upload Handoff Image">
+    Click **"Upload Handoff Image"** if you have a photo of:
+    - Handwritten handoff notes
+    - Printed reports
+    - Whiteboard notes
+    - Other documentation
+    
+    After uploading:
+    1. Review the image preview
+    2. Click **"Analyze & Add to Notes"**
+    3. The AI will extract text and integrate it with the patient record
+    4. A new comprehensive handoff note will be generated
+  </Tab>
+</Tabs>
+
+<Warning>
+  The generation process takes 5-15 seconds depending on the complexity of the patient record. The notes are automatically saved once generated.
+</Warning>
+
+### Step 5: Review and Edit Notes
+
+After generation, review the handoff notes for accuracy and completeness.
+
+**Formatted View:**
+- Notes are displayed in an easy-to-read format
+- Sections are clearly delineated
+- Key information is highlighted
+- Timestamps show when notes were last updated
+
+**Editing Notes:**
+1. Click **"Edit Notes"** to enter edit mode
+2. Make your changes in the text area
+3. Click **"Save Changes"** when done
+4. Or click **"Cancel"** to discard changes
+
+<Tip>
+  Use the **"Copy"** button to quickly copy notes to your clipboard for pasting into other systems or documentation.
+</Tip>
+
+### Step 6: Manage Tasks
+
+Before completing the handoff, ensure all tasks are properly marked:
+
+**Task Management:**
+- Click any task checkbox to toggle completion status
+- Tasks are organized into:
+  - **Completed This Shift** - Tasks you've finished
+  - **Outstanding Tasks** - Tasks that need to be handed off
+- Outstanding tasks are sorted by priority (critical → high → medium → low)
+
+**Task Information Displayed:**
+- Scheduled time
+- Priority level
+- Task type (medication, assessment, procedure, etc.)
+- Detailed description
+
+<Note>
+  Task status updates are saved immediately and reflected in real-time across all connected devices.
+</Note>
+
+### Step 7: Update Patient Information (If Needed)
+
+If patient demographics or status have changed:
+
+1. Click **"Edit Patient Info"**
+2. Update any of the following:
+   - Name
+   - Age
+   - Sex
+   - Chief complaint
+   - Code status
+3. Click **"Save Patient Info"**
+
+<Warning>
+  Changes to patient information are permanent and visible to all users. Ensure accuracy before saving.
+</Warning>
+
+### Step 8: Complete the Handoff
+
+Before leaving:
+
+<Checklist>
+  - [ ] All patient information is current and accurate
+  - [ ] Handoff notes have been generated or updated
+  - [ ] Completed tasks are marked as done
+  - [ ] Outstanding tasks are clearly documented
+  - [ ] Critical items are highlighted in the notes
+  - [ ] Notes have been saved (automatic after generation)
+  - [ ] Receiving nurse has been notified
+</Checklist>
+
+</Steps>
+
+## Workflow Tips
+
+<CardGroup cols={2}>
+  <Card title="Start Early" icon="clock">
+    Begin generating handoff notes 30-45 minutes before shift end to allow time for review and updates.
+  </Card>
+  
+  <Card title="Use Filters" icon="filter">
+    Filter by "My Patients" to focus on your assigned rooms and ensure you don't miss anyone.
+  </Card>
+  
+  <Card title="Prioritize Critical" icon="triangle-exclamation">
+    Review critical and high-risk patients first to ensure comprehensive handoff of complex cases.
+  </Card>
+  
+  <Card title="Document as You Go" icon="pen-to-square">
+    Update tasks throughout your shift so handoff notes accurately reflect completed work.
+  </Card>
+</CardGroup>
+
+## Real-Time Collaboration
+
+The Nurse Handoff Helper supports multiple nurses working simultaneously:
+
+- **Live Updates**: Changes made by one user are immediately visible to others
+- **No Conflicts**: The system handles concurrent edits gracefully
+- **Activity Tracking**: See when patient information was last updated
+- **Shared Visibility**: All team members see the same current state
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Patient Records" icon="folder-open" href="/guide/patient-records">
+    Learn how to view and manage patient records
+  </Card>
+  
+  <Card title="Generating Notes" icon="sparkles" href="/guide/generating-notes">
+    Deep dive into AI-powered note generation
+  </Card>
+  
+  <Card title="Editing & Saving" icon="floppy-disk" href="/guide/editing-saving">
+    Master note editing and saving workflows
+  </Card>
+</CardGroup>

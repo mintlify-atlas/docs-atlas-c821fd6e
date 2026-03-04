@@ -1,0 +1,116 @@
+---
+title: Installation
+description: Step-by-step guide to install and set up the Nurse Handoff Helper application
+---
+
+## Prerequisites
+
+Before installing the Nurse Handoff Helper, ensure you have the following installed:
+
+- **Node.js** (v18 or higher)
+- **npm** (v9 or higher)
+- A **Supabase** account (free tier available at [supabase.com](https://supabase.com))
+- An **Anthropic API key** (get one at [console.anthropic.com](https://console.anthropic.com/))
+
+<Info>
+  The application uses Claude Sonnet 4 for AI-powered handoff analysis and patient record summarization.
+</Info>
+
+## Clone the Repository
+
+Clone the project repository to your local machine:
+
+```bash
+git clone <repository-url>
+cd handoff
+```
+
+## Install Dependencies
+
+The application requires both frontend and backend dependencies:
+
+```bash
+npm install
+```
+
+### Core Dependencies
+
+The application uses the following key dependencies:
+
+<CardGroup cols={2}>
+  <Card title="Frontend" icon="react">
+    - React 18.2
+    - Vite 5.0
+    - TailwindCSS 4.1
+    - Lucide React (icons)
+    - React Icons
+  </Card>
+  <Card title="Backend" icon="server">
+    - Express 5.1
+    - Supabase JS 2.81
+    - Anthropic SDK 0.69
+    - CORS, Multer, Dotenv
+  </Card>
+</CardGroup>
+
+### Full Dependency List
+
+<AccordionGroup>
+  <Accordion title="Production Dependencies">
+    ```json
+    {
+      "@anthropic-ai/sdk": "^0.69.0",
+      "@supabase/supabase-js": "^2.81.1",
+      "cors": "^2.8.5",
+      "dotenv": "^17.2.3",
+      "express": "^5.1.0",
+      "lucide-react": "^0.553.0",
+      "multer": "^2.0.2",
+      "react": "^18.2.0",
+      "react-dom": "^18.2.0",
+      "react-icons": "^5.5.0"
+    }
+    ```
+  </Accordion>
+  <Accordion title="Development Dependencies">
+    ```json
+    {
+      "@tailwindcss/postcss": "^4.1.17",
+      "@types/react": "^18.2.43",
+      "@types/react-dom": "^18.2.17",
+      "@vitejs/plugin-react": "^4.2.1",
+      "autoprefixer": "^10.4.22",
+      "postcss": "^8.5.6",
+      "tailwindcss": "^4.1.17",
+      "vite": "^5.0.8"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+## Verify Installation
+
+After installing dependencies, verify that everything is set up correctly:
+
+```bash
+node --version  # Should be v18 or higher
+npm --version   # Should be v9 or higher
+```
+
+Check that all dependencies were installed:
+
+```bash
+npm list --depth=0
+```
+
+## Next Steps
+
+After installation, you'll need to:
+
+1. Configure environment variables - see [Environment Configuration](/setup/environment)
+2. Set up your Supabase database - see [Supabase Setup](/setup/supabase)
+3. Create nurse accounts - see [Nurse Accounts](/setup/nurse-accounts)
+
+<Warning>
+  Do not proceed to running the application until you've completed the environment configuration and database setup.
+</Warning>

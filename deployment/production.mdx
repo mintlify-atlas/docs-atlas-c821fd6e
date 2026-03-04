@@ -1,0 +1,384 @@
+---
+title: 'Production Deployment'
+description: 'Complete guide to deploying Nurse Handoff Helper to production'
+---
+
+## Overview
+
+This guide covers deploying the Nurse Handoff Helper application to production. The application consists of two main components:
+
+- **Frontend**: React application built with Vite
+- **Backend**: Express.js API server
+
+<Warning>
+This application handles sensitive patient health information. Ensure all deployment practices comply with HIPAA regulations and your organization's security policies.
+</Warning>
+
+## Prerequisites
+
+Before deploying to production, ensure you have:
+
+- Node.js 18 or higher
+- A Supabase project with production database
+- API keys from Anthropic and/or OpenAI
+- A hosting platform (see recommendations below)
+- SSL/TLS certificates for HTTPS
+- Environment variables securely configured
+
+## Build Process
+
+### Frontend Build
+
+The frontend uses Vite for building and bundling:
+
+```bash
+npm run build
+```
+
+This command:
+- Compiles React components and assets
+- Optimizes JavaScript and CSS with Tailwind CSS v4
+- Outputs production-ready files to the `dist/` directory
+- Minifies and tree-shakes code for optimal performance
+
+<Accordion title="Build Output Details">
+The build process creates:
+- `dist/index.html` - Main HTML entry point
+- `dist/assets/` - Optimized JS, CSS, and static assets
+- Source maps (optional, configure in `vite.config.js`)
+
+The default Vite configuration is minimal. For production, consider adding:
+- Custom base URL if deploying to a subdirectory
+- Build optimizations
+- Environment-specific configurations
+</Accordion>
+
+### Preview Production Build
+
+Test the production build locally before deploying:
+
+```bash
+npm run preview
+```
+
+This serves the built files from `dist/` on a local server, allowing you to verify the production build works correctly.
+
+## Environment Configuration
+
+### Backend Environment Variables
+
+<Warning>
+Never commit `.env` files to version control. The `.env` file is already in `.gitignore`.
+</Warning>
+
+Required environment variables for production:
+
+```env
+# Server Configuration
+PORT=3001
+
+# Supabase Configuration (Required)
+VITE_SUPABASE_URL=your_production_supabase_url
+VITE_SUPABASE_ANON_KEY=your_production_anon_key
+SUPABASE_SERVICE_KEY=your_production_service_role_key
+
+# AI Provider API Keys (at least one required)
+ANTHROPIC_API_KEY=your_production_anthropic_key
+OPENAI_API_KEY=your_production_openai_key
+```
+
+<Note>
+- `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are exposed to the frontend
+- `SUPABASE_SERVICE_KEY` is server-side only and enables admin operations
+- AI API keys are server-side only and never exposed to the browser
+- You need at least one AI provider configured (Claude or OpenAI)
+</Note>
+
+### Environment Variable Management
+
+<Accordion title="Production Environment Setup">
+**Best Practices:**
+
+1. **Use environment-specific files**: Create separate configurations for staging and production
+2. **Secret management**: Use your hosting platform's secret management (e.g., Heroku Config Vars, Vercel Environment Variables)
+3. **Rotation policy**: Regularly rotate API keys and service role keys
+4. **Access control**: Limit who can view/modify production environment variables
+5. **Backup**: Document which services use which keys (without storing actual keys)
+</Accordion>
+
+## Hosting Options
+
+### Option 1: Monolithic Deployment (Same Server)
+
+Deploy both frontend and backend on the same server.
+
+**Suitable platforms:**
+- Heroku
+- DigitalOcean App Platform
+- AWS Elastic Beanstalk
+- Google Cloud Run
+
+**Setup:**
+
+1. Configure the backend to serve static files:
+
+```javascript
+// Add to server/index.js before other routes
+import path from 'path';
+import { fileURLToPath } from 'url';
+
+const __dirname = path.dirname(fileURLToPath(import.meta.url));
+app.use(express.static(path.join(__dirname, '../dist')));
+
+// Add after all API routes
+app.get('*', (req, res) => {
+  res.sendFile(path.join(__dirname, '../dist/index.html'));
+});
+```
+
+2. Create a production start script in `package.json`:
+
+```json
+{
+  "scripts": {
+    "start:prod": "node server/index.js"
+  }
+}
+```
+
+3. Deploy with both frontend and backend together
+
+### Option 2: Separated Deployment (Recommended)
+
+Deploy frontend and backend separately for better scalability.
+
+**Frontend platforms:**
+- Vercel
+- Netlify
+- Cloudflare Pages
+- AWS S3 + CloudFront
+
+**Backend platforms:**
+- Heroku
+- Railway
+- Render
+- AWS Lambda + API Gateway
+- Google Cloud Functions
+
+**Configuration:**
+
+1. **Frontend**: Update API endpoint in your React app
+2. **Backend**: Configure CORS for your frontend domain
+
+```javascript
+// server/index.js
+app.use(cors({
+  origin: 'https://your-frontend-domain.com',
+  credentials: true
+}));
+```
+
+<Tip>
+For separated deployments, consider using environment variables for the API URL so you can easily switch between development and production endpoints.
+</Tip>
+
+## Database Setup
+
+### Supabase Configuration
+
+Ensure your production Supabase project has:
+
+1. **Required tables**:
+   - `nurses` - with columns: `id`, `email`, `name`, `auth_user_id`
+   - `patients` - patient records
+   - `rooms` - room assignments
+   - `tasks` - patient tasks
+   - `logs` - activity logs
+
+2. **Row Level Security (RLS)**: Enable RLS policies to restrict data access
+
+3. **Auth configuration**: Configure Supabase Auth with appropriate settings
+
+### Creating Nurse Accounts
+
+After deployment, create authentication accounts for nurses:
+
+```bash
+curl -X POST https://your-api-domain.com/api/nurses/create-accounts
+```
+
+This endpoint:
+- Creates Supabase Auth accounts for all nurses in the database
+- Generates temporary passwords
+- Links auth users to nurse records
+- Requires `SUPABASE_SERVICE_KEY` to be configured
+
+<Warning>
+Store the temporary passwords securely and distribute them to nurses through a secure channel. Nurses should change their passwords on first login.
+</Warning>
+
+## Server Configuration
+
+### Port Configuration
+
+The server runs on port 3001 by default. To change:
+
+```env
+PORT=8080
+```
+
+### File Upload Limits
+
+The application limits file uploads to 10MB. To adjust:
+
+```javascript
+// server/index.js
+const upload = multer({
+  storage,
+  limits: { fileSize: 20 * 1024 * 1024 }, // 20MB
+});
+```
+
+### Request Size Limits
+
+JSON payload limit is 50MB. To adjust:
+
+```javascript
+app.use(express.json({ limit: "100mb" }));
+app.use(express.urlencoded({ extended: true, limit: "100mb" }));
+```
+
+## Health Checks
+
+The API provides a health check endpoint:
+
+```bash
+GET /api/health
+```
+
+**Response:**
+```json
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+
+Use this endpoint for:
+- Load balancer health checks
+- Monitoring and alerting
+- Verifying API key configuration
+
+## Deployment Checklist
+
+<Accordion title="Pre-Deployment Checklist">
+- [ ] Run `npm run build` and verify no errors
+- [ ] Test production build with `npm run preview`
+- [ ] Configure all environment variables
+- [ ] Set up SSL/TLS certificates
+- [ ] Configure CORS for production domains
+- [ ] Enable Supabase Row Level Security
+- [ ] Test database connections
+- [ ] Verify API keys are valid
+- [ ] Set up monitoring and logging
+- [ ] Configure backup strategy
+- [ ] Document deployment process
+- [ ] Create incident response plan
+- [ ] Verify HIPAA compliance measures
+</Accordion>
+
+<Accordion title="Post-Deployment Checklist">
+- [ ] Test all API endpoints
+- [ ] Verify frontend loads correctly
+- [ ] Test user authentication flow
+- [ ] Create nurse accounts
+- [ ] Test AI analysis features
+- [ ] Verify file upload functionality
+- [ ] Check health endpoint
+- [ ] Set up monitoring alerts
+- [ ] Document production URLs
+- [ ] Train staff on production system
+</Accordion>
+
+## Scaling Considerations
+
+### Horizontal Scaling
+
+The application is stateless and can be scaled horizontally:
+
+- Add more server instances behind a load balancer
+- Use session-based authentication (already implemented with Supabase)
+- Consider a CDN for static assets
+
+### Database Scaling
+
+As your patient database grows:
+
+- Monitor Supabase usage and upgrade plan as needed
+- Implement database indexing on frequently queried fields
+- Consider archiving old patient records
+- Set up regular database backups
+
+### API Rate Limits
+
+<Warning>
+Both Anthropic and OpenAI have rate limits. Monitor usage and implement:
+- Request queuing for high-volume periods
+- Caching for repeated analyses
+- Rate limiting on your API endpoints
+</Warning>
+
+## Monitoring and Logging
+
+### Application Logging
+
+The server logs important events to console:
+- API errors
+- Database operations
+- AI provider requests
+- Authentication events
+
+**Recommended logging service:**
+- Datadog
+- New Relic
+- LogDNA
+- Papertrail
+
+### Performance Monitoring
+
+Monitor:
+- API response times
+- Database query performance
+- AI provider latency
+- Server resource usage (CPU, memory)
+- Error rates
+
+## Backup and Recovery
+
+1. **Database backups**: Supabase provides automated backups on paid plans
+2. **Environment configuration**: Keep encrypted backups of environment variables
+3. **Code repository**: Ensure code is committed to version control
+4. **Documentation**: Maintain up-to-date deployment documentation
+
+## Rollback Strategy
+
+In case of deployment issues:
+
+1. Keep previous version deployable
+2. Use blue-green deployment if possible
+3. Document rollback procedures
+4. Test rollback process in staging environment
+
+<Tip>
+Consider using deployment automation tools like GitHub Actions, GitLab CI/CD, or Jenkins to standardize your deployment process and enable quick rollbacks.
+</Tip>
+
+## Next Steps
+
+- Review [Security Best Practices](/deployment/security)
+- Set up [Troubleshooting](/troubleshooting/common-issues) procedures
+- Configure monitoring and alerts
+- Train staff on the production system

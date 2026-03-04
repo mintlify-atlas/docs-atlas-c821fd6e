@@ -1,0 +1,363 @@
+---
+title: "Image Analysis"
+description: "Upload and analyze handoff documents, whiteboards, and medical images with AI"
+icon: "camera"
+---
+
+## Overview
+
+The Image Analysis feature allows nurses to upload photos of handoff whiteboards, paper documents, or other medical images. Claude's vision capabilities extract structured information from these images and integrate it seamlessly with electronic patient records.
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Handoff Whiteboards" icon="chalkboard">
+    Capture information from patient room whiteboards with handwritten notes
+  </Card>
+  
+  <Card title="Paper Documents" icon="file-lines">
+    Digitize paper handoff sheets and forms
+  </Card>
+  
+  <Card title="Vital Signs" icon="heart-pulse">
+    Extract vitals from monitor screenshots or flowsheets
+  </Card>
+  
+  <Card title="Lab Results" icon="vial">
+    Parse printed lab reports and imaging results
+  </Card>
+</CardGroup>
+
+## Image Upload Workflow
+
+### In Patient Detail View
+
+From `~/workspace/source/src/components/PatientDetail.jsx:220-284`:
+
+<Steps>
+  <Step title="Select Image">
+    Click **"Upload Handoff Image"** button or drag and drop an image file
+  </Step>
+  <Step title="Preview">
+    Image preview appears with file information
+  </Step>
+  <Step title="Analyze">
+    Click **"Analyze & Add to Notes"** to process with AI
+  </Step>
+  <Step title="Integration">
+    Analysis is automatically integrated into handoff notes
+  </Step>
+  <Step title="Regeneration">
+    System regenerates complete handoff notes with image data merged
+  </Step>
+</Steps>
+
+```jsx
+const handleImageSelect = (e) => {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    setSelectedImage(file);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => setImagePreview(e.target.result);
+    reader.readAsDataURL(file);
+  }
+};
+```
+
+### Standalone Image Analyzer
+
+A dedicated image analyzer component is available at `~/workspace/source/src/components/ImageAnalyzer.jsx` with:
+
+- **Drag and drop** support
+- **Click to upload** functionality
+- **Real-time preview** of uploaded images
+- **Copy analysis** to clipboard
+
+<CodeGroup>
+```jsx Image Selection
+const handleFileSelect = (e) => {
+  const file = e.target.files[0];
+  if (file && file.type.startsWith('image/')) {
+    setSelectedFile(file);
+    
+    const reader = new FileReader();
+    reader.onload = (e) => setPreview(e.target.result);
+    reader.readAsDataURL(file);
+  }
+};
+```
+
+```jsx Drag and Drop
+const handleDrop = (e) => {
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if (file && file.type.startsWith('image/')) {
+    setSelectedFile(file);
+    // ... process file
+  }
+};
+```
+</CodeGroup>
+
+## AI Analysis
+
+### What Claude Extracts
+
+From `~/workspace/source/server/index.js:63-142`, the AI analyzes images for:
+
+<AccordionGroup>
+  <Accordion title="Patient Overview">
+    - Patient name and identifiers
+    - Demographics (age, sex)
+    - Chief complaint or admission reason
+  </Accordion>
+  
+  <Accordion title="Clinical Status">
+    - Current condition
+    - Vital signs (temperature, heart rate, blood pressure, O2 saturation)
+    - Trends in vital signs over time
+  </Accordion>
+  
+  <Accordion title="Lab & Imaging">
+    - Key lab results
+    - Imaging findings
+    - Trends and changes from previous results
+  </Accordion>
+  
+  <Accordion title="Medications & Treatments">
+    - Active medications
+    - Recent medication changes
+    - Ongoing treatments or interventions
+  </Accordion>
+  
+  <Accordion title="Task Status" icon="list-check">
+    - Completed tasks during the shift
+    - Outstanding tasks with priorities
+    - Time-sensitive actions needed
+  </Accordion>
+  
+  <Accordion title="Safety Concerns">
+    - Allergies
+    - Fall risk
+    - Code status (Full Code, DNR, DNI)
+    - Isolation precautions
+  </Accordion>
+</AccordionGroup>
+
+<Note>
+**Task Status is Very Important** - The system specifically looks for and emphasizes completed and outstanding tasks from handoff documents.
+</Note>
+
+### Claude Prompt
+
+The AI receives this instruction at `~/workspace/source/server/index.js:99-126`:
+
+```text
+You are a clinical nursing assistant analyzing a handoff document or whiteboard. 
+Please extract and summarize the following information:
+
+1. Patient overview and Shift-Level Forecast
+2. Current clinical status and vital signs
+3. Key lab/imaging findings and trends
+4. Active medications and treatments
+5. TASK STATUS - Completed and outstanding tasks (VERY IMPORTANT)
+6. Safety concerns (allergies, fall risk, code status, etc.)
+
+WE CARE A LOT ABOUT TRENDS - If there are trends in vitals, labs, or 
+condition changes, highlight them clearly.
+
+Format the output as a clear, organized summary suitable for nurse handoff. 
+If any information is unclear or not visible, note that. 
+Keep the summary concise and focused on actionable items.
+```
+
+## Integration with Patient Records
+
+When an image is analyzed in the patient detail view at `~/workspace/source/src/components/PatientDetail.jsx:157-217`, the system:
+
+<Steps>
+  <Step title="Extracts Data">
+    Claude analyzes the image and returns structured text
+  </Step>
+  <Step title="Merges Information">
+    Image data is combined with electronic patient record
+  </Step>
+  <Step title="Regenerates Notes">
+    Complete handoff notes are regenerated with integrated data
+  </Step>
+  <Step title="Marks Updates">
+    Information from the image is prefixed with **IMAGE UPDATE:**
+  </Step>
+</Steps>
+
+```jsx
+const regenerateHandoffWithImage = async (imageAnalysisText) => {
+  const response = await fetch(
+    `http://localhost:3001/api/summarize-record/${aiProvider}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patientData: patientDataWithCurrentTasks,
+        previousNotes: handoffNotes,
+        imageAnalysis: imageAnalysisText,  // Image data merged here
+      }),
+    }
+  );
+};
+```
+
+<Tip>
+The system prioritizes newer information from images when conflicts exist with the electronic record. These updates are clearly marked with **IMAGE UPDATE:** prefix.
+</Tip>
+
+## API Endpoint
+
+### Analyze Image
+
+<CodeGroup>
+```bash cURL
+curl -X POST http://localhost:3001/api/analyze-image/claude \
+  -H "Content-Type: multipart/form-data" \
+  -F "image=@handoff-whiteboard.jpg"
+```
+
+```javascript JavaScript
+const formData = new FormData();
+formData.append('image', selectedFile);
+
+const response = await fetch(
+  'http://localhost:3001/api/analyze-image/claude',
+  {
+    method: 'POST',
+    body: formData,
+  }
+);
+
+const data = await response.json();
+console.log(data.summary);
+```
+
+```python Python
+import requests
+
+with open('handoff-whiteboard.jpg', 'rb') as f:
+    files = {'image': f}
+    response = requests.post(
+        'http://localhost:3001/api/analyze-image/claude',
+        files=files
+    )
+    
+data = response.json()
+print(data['summary'])
+```
+</CodeGroup>
+
+**Response:**
+
+```json
+{
+  "summary": "## Patient Overview\n\nJohn Doe, 65M, Room 302A\n\n## Current Clinical Status\n\nVitals (18:00):\n- Temp: 98.6°F\n- HR: 72 bpm\n- BP: 132/78\n- O2 Sat: 96% on RA\n\n## Task Status\n\n**Completed:**\n✓ 20:00 - Medications administered\n✓ 21:00 - Vitals checked\n\n**Outstanding:**\n⚠ 00:00 - Lab draw (CRITICAL)\n⚠ 02:00 - Dressing change (HIGH)\n\n## Safety Concerns\n\n- Allergies: Penicillin\n- Code Status: Full Code\n- Fall Risk: Moderate",
+  "provider": "claude"
+}
+```
+
+From `~/workspace/source/server/index.js:63-142`
+
+## File Upload Configuration
+
+The backend uses Multer for file handling at `~/workspace/source/server/index.js:19-24`:
+
+```javascript
+const storage = multer.memoryStorage();
+const upload = multer({
+  storage,
+  limits: { fileSize: 10 * 1024 * 1024 }, // 10MB limit
+});
+```
+
+<Warning>
+**File Size Limit:** Images must be under 10MB. The system stores images in memory during processing.
+</Warning>
+
+## Supported Formats
+
+The system accepts all standard image formats:
+
+- JPEG / JPG
+- PNG
+- GIF
+- WebP
+- BMP
+- TIFF
+
+Validation occurs at `~/workspace/source/src/components/ImageAnalyzer.jsx:14-26`:
+
+```jsx
+if (file && file.type.startsWith('image/')) {
+  // Process image
+} else {
+  setError('Please select a valid image file');
+}
+```
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Good Lighting" icon="sun">
+    Ensure whiteboards and documents are well-lit without glare
+  </Card>
+  
+  <Card title="Clear Focus" icon="crosshairs">
+    Keep camera steady and ensure text is in focus
+  </Card>
+  
+  <Card title="Full Frame" icon="expand">
+    Capture the entire document or whiteboard in frame
+  </Card>
+  
+  <Card title="High Resolution" icon="image">
+    Use highest quality camera setting available
+  </Card>
+</CardGroup>
+
+<Tip>
+For handwritten notes, ensure handwriting is legible. Claude can read most handwriting but neat, clear text produces better results.
+</Tip>
+
+## Features
+
+<AccordionGroup>
+  <Accordion title="Image Preview">
+    See uploaded image before analysis with option to clear and reupload
+  </Accordion>
+  
+  <Accordion title="Auto-Integration">
+    Analysis automatically merges with electronic records in patient detail view
+  </Accordion>
+  
+  <Accordion title="Conflict Resolution">
+    Newer information from images is prioritized and clearly marked
+  </Accordion>
+  
+  <Accordion title="Copy Support">
+    One-click copy of analysis results to clipboard
+  </Accordion>
+  
+  <Accordion title="Error Handling">
+    Clear error messages for invalid files or analysis failures
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Patient Handoff" icon="file-text" href="/features/patient-handoff">
+    Learn how image analysis integrates with handoff note generation
+  </Card>
+  
+  <Card title="Claude Integration" icon="robot" href="/features/ai-providers">
+    Understand how Claude's vision model processes images
+  </Card>
+</CardGroup>

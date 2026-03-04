@@ -1,0 +1,441 @@
+---
+title: Nurses API
+description: Manage nurse accounts and authentication
+---
+
+## GET /api/nurses
+
+Retrieve all nurse records from the database.
+
+### Request
+
+No parameters required.
+
+```bash
+curl http://localhost:3001/api/nurses
+```
+
+### Response
+
+Returns an array of nurse objects sorted alphabetically by name.
+
+<ResponseField name="nurses" type="array">
+  Array of nurse objects, each containing:
+  
+  <Expandable title="Nurse Object">
+    <ResponseField name="id" type="string">
+      Internal database ID
+    </ResponseField>
+    
+    <ResponseField name="name" type="string">
+      Nurse's full name
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      Nurse's email address
+    </ResponseField>
+    
+    <ResponseField name="auth_user_id" type="string" optional>
+      Supabase Auth user ID (if account created)
+    </ResponseField>
+    
+    <ResponseField name="created_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+    
+    <ResponseField name="updated_at" type="string">
+      ISO 8601 timestamp
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Response Example
+
+<CodeGroup>
+
+```json Success Response
+[
+  {
+    "id": "nurse-001",
+    "name": "Alice Johnson",
+    "email": "alice.johnson@hospital.com",
+    "auth_user_id": "550e8400-e29b-41d4-a716-446655440000",
+    "created_at": "2026-01-15T08:00:00Z",
+    "updated_at": "2026-03-04T10:30:00Z"
+  },
+  {
+    "id": "nurse-002",
+    "name": "Bob Smith",
+    "email": "bob.smith@hospital.com",
+    "auth_user_id": null,
+    "created_at": "2026-01-16T09:00:00Z",
+    "updated_at": "2026-01-16T09:00:00Z"
+  }
+]
+```
+
+```json Error Response
+{
+  "error": "Failed to read nurses",
+  "details": "Database connection error"
+}
+```
+
+</CodeGroup>
+
+---
+
+## POST /api/nurses/create-accounts
+
+Create Supabase Auth accounts for nurses that exist in the database but don't have authentication accounts yet. This is an administrative operation typically run during initial setup or when onboarding new nurses.
+
+<Warning>
+  This endpoint requires `SUPABASE_SERVICE_KEY` (service role key) in environment variables. The standard anonymous key is insufficient for user creation.
+</Warning>
+
+### How It Works
+
+For each nurse in the database:
+
+1. **Checks** if nurse already has `auth_user_id` → skips if yes
+2. **Searches** for existing Supabase Auth user with matching email
+3. **Links** to existing auth account if found, OR
+4. **Creates** new auth account with temporary password
+5. **Updates** nurse record with `auth_user_id`
+
+### Request
+
+No request body required. Processes all nurses automatically.
+
+```bash
+curl -X POST http://localhost:3001/api/nurses/create-accounts
+```
+
+### Response
+
+<ResponseField name="success" type="boolean">
+  Whether the operation completed successfully
+</ResponseField>
+
+<ResponseField name="message" type="string">
+  Summary message (e.g., "Processed 5 nurses")
+</ResponseField>
+
+<ResponseField name="results" type="array">
+  Array of result objects for each nurse
+  
+  <Expandable title="Result Object">
+    <ResponseField name="nurse_id" type="string">
+      Nurse database ID
+    </ResponseField>
+    
+    <ResponseField name="email" type="string">
+      Nurse email address
+    </ResponseField>
+    
+    <ResponseField name="status" type="string">
+      Result status: `skipped`, `linked`, `created`, or `error`
+    </ResponseField>
+    
+    <ResponseField name="message" type="string">
+      Human-readable result message
+    </ResponseField>
+    
+    <ResponseField name="tempPassword" type="string" optional>
+      Temporary password (only for `created` status). **Save this securely!**
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Response Example
+
+<CodeGroup>
+
+```json Success Response
+{
+  "success": true,
+  "message": "Processed 3 nurses",
+  "results": [
+    {
+      "nurse_id": "nurse-001",
+      "email": "alice.johnson@hospital.com",
+      "status": "skipped",
+      "message": "Already has auth account"
+    },
+    {
+      "nurse_id": "nurse-002",
+      "email": "bob.smith@hospital.com",
+      "status": "linked",
+      "message": "Linked to existing auth account"
+    },
+    {
+      "nurse_id": "nurse-003",
+      "email": "carol.white@hospital.com",
+      "status": "created",
+      "message": "Account created. Temporary password: Tempnurse-0031709876543210",
+      "tempPassword": "Tempnurse-0031709876543210"
+    },
+    {
+      "nurse_id": "nurse-004",
+      "email": "invalid@email",
+      "status": "error",
+      "message": "Invalid email format"
+    }
+  ]
+}
+```
+
+```json Service Unavailable
+{
+  "error": "Admin operations require SUPABASE_SERVICE_KEY to be set in environment variables"
+}
+```
+
+```json Error Response
+{
+  "error": "Failed to create nurse accounts",
+  "details": "Database error message"
+}
+```
+
+</CodeGroup>
+
+### Status Types
+
+<AccordionGroup>
+  <Accordion title="skipped">
+    Nurse already has an `auth_user_id` linked. No action taken.
+    
+    ```json
+    {
+      "status": "skipped",
+      "message": "Already has auth account"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="linked">
+    Found existing Supabase Auth user with matching email. Linked the auth user ID to the nurse record.
+    
+    ```json
+    {
+      "status": "linked",
+      "message": "Linked to existing auth account"
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="created">
+    Created new Supabase Auth account for the nurse. Returns a temporary password.
+    
+    **Important:** Save the `tempPassword` securely and share it with the nurse through a secure channel.
+    
+    ```json
+    {
+      "status": "created",
+      "message": "Account created. Temporary password: TempXXX",
+      "tempPassword": "TempXXX"
+    }
+    ```
+    
+    Temporary password format: `Temp{nurse_id}{timestamp}`
+  </Accordion>
+  
+  <Accordion title="error">
+    An error occurred while processing this nurse.
+    
+    ```json
+    {
+      "status": "error",
+      "message": "Failed to create user: error details"
+    }
+    ```
+  </Accordion>
+</AccordionGroup>
+
+### Created Account Details
+
+When a new account is created:
+
+- **Email**: Nurse's email from database
+- **Password**: Temporary password (format: `Temp{nurse_id}{timestamp}`)
+- **Email Confirmed**: Yes (auto-confirmed)
+- **User Metadata**: Includes nurse name and database ID
+
+<Warning>
+  **Security Best Practices:**
+  - Store temporary passwords securely
+  - Share passwords through secure channels (never plain email)
+  - Force password change on first login
+  - Implement password expiration for temporary passwords
+</Warning>
+
+### Error Responses
+
+<ResponseField name="503" type="error">
+  Service role key not configured
+  ```json
+  {
+    "error": "Admin operations require SUPABASE_SERVICE_KEY to be set in environment variables"
+  }
+  ```
+</ResponseField>
+
+<ResponseField name="500" type="error">
+  Failed to create accounts
+  ```json
+  {
+    "error": "Failed to create nurse accounts",
+    "details": "Error message"
+  }
+  ```
+</ResponseField>
+
+## Integration Example
+
+<CodeGroup>
+
+```javascript fetch
+const createNurseAccounts = async () => {
+  try {
+    const response = await fetch('http://localhost:3001/api/nurses/create-accounts', {
+      method: 'POST'
+    });
+    
+    const data = await response.json();
+    
+    // Process results
+    data.results.forEach(result => {
+      switch(result.status) {
+        case 'created':
+          console.log(`Created account for ${result.email}`);
+          console.log(`Temporary password: ${result.tempPassword}`);
+          // TODO: Securely store and share password
+          break;
+        
+        case 'linked':
+          console.log(`Linked existing account: ${result.email}`);
+          break;
+        
+        case 'skipped':
+          console.log(`Skipped ${result.email}: ${result.message}`);
+          break;
+        
+        case 'error':
+          console.error(`Error for ${result.email}: ${result.message}`);
+          break;
+      }
+    });
+    
+    return data;
+  } catch (error) {
+    console.error('Failed to create nurse accounts:', error);
+    throw error;
+  }
+};
+
+// Usage
+createNurseAccounts();
+```
+
+```python Python
+import requests
+
+def create_nurse_accounts():
+    response = requests.post('http://localhost:3001/api/nurses/create-accounts')
+    data = response.json()
+    
+    # Process results
+    for result in data['results']:
+        status = result['status']
+        email = result['email']
+        
+        if status == 'created':
+            print(f"Created account for {email}")
+            print(f"Temporary password: {result['tempPassword']}")
+            # TODO: Securely store and share password
+        
+        elif status == 'linked':
+            print(f"Linked existing account: {email}")
+        
+        elif status == 'skipped':
+            print(f"Skipped {email}: {result['message']}")
+        
+        elif status == 'error':
+            print(f"Error for {email}: {result['message']}")
+    
+    return data
+
+# Usage
+create_nurse_accounts()
+```
+
+```bash cURL
+curl -X POST http://localhost:3001/api/nurses/create-accounts \
+  -H "Content-Type: application/json"
+```
+
+</CodeGroup>
+
+## Use Cases
+
+<CardGroup cols={2}>
+  <Card title="Initial Setup" icon="rocket">
+    Run once during system deployment to create auth accounts for all nurses in the database.
+  </Card>
+  
+  <Card title="Onboarding" icon="user-plus">
+    Run after adding new nurse records to the database to create their auth accounts.
+  </Card>
+  
+  <Card title="Account Recovery" icon="rotate">
+    Link existing auth accounts to nurse records if the connection was lost.
+  </Card>
+  
+  <Card title="Audit" icon="list-check">
+    Check which nurses have auth accounts and which need accounts created.
+  </Card>
+</CardGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Environment Setup">
+    Ensure `SUPABASE_SERVICE_KEY` is set in your `.env` file:
+    
+    ```bash
+    SUPABASE_SERVICE_KEY=eyJhbGc...(your service role key)
+    ```
+    
+    **Never commit this key to version control!**
+  </Accordion>
+  
+  <Accordion title="Password Management">
+    - Parse and store temporary passwords from the response
+    - Use a secure password manager or vault
+    - Implement a password delivery system (secure email, SMS, or portal)
+    - Force password change on first login
+    - Set expiration for temporary passwords
+  </Accordion>
+  
+  <Accordion title="Error Handling">
+    Check the `status` field for each result:
+    
+    ```javascript
+    const errors = results.filter(r => r.status === 'error');
+    if (errors.length > 0) {
+      // Handle errors (notify admin, retry, log)
+    }
+    ```
+  </Accordion>
+  
+  <Accordion title="Automation">
+    Consider integrating this endpoint into your onboarding workflow:
+    
+    1. Add nurse to database
+    2. Call `/api/nurses/create-accounts`
+    3. Extract temporary password from response
+    4. Send welcome email with password
+    5. Log account creation for audit trail
+  </Accordion>
+</AccordionGroup>

@@ -1,0 +1,125 @@
+---
+title: Introduction
+description: AI-powered nurse handoff system for streamlined patient care coordination
+---
+
+## What is Nurse Handoff Helper?
+
+Nurse Handoff Helper is an AI-powered web application designed to streamline nurse-to-nurse patient handoffs. The application uses advanced AI models (Claude Sonnet 4 and GPT-4o) to analyze handoff documents, generate structured summaries, and make critical patient information easily accessible during shift transitions.
+
+<Note>
+  Nurse handoffs are critical moments in patient care. This tool helps nurses quickly understand patient status, pending tasks, and safety concerns—reducing miscommunication and improving patient outcomes.
+</Note>
+
+## Key Features
+
+### Comprehensive Patient Dashboard
+
+View all patients at a glance with risk-level indicators, real-time task tracking, and quick access to detailed records. The dashboard includes:
+
+- **Room Grid View**: Visual overview of all patient rooms with status indicators
+- **Task Management**: Track medication times, procedures, and care tasks
+- **Route Planning**: Optimize your rounds with intelligent routing
+- **Nurse Scheduling**: View team assignments and coverage
+
+### AI-Powered Handoff Generation
+
+Generate structured handoff notes from patient records with:
+
+- **Patient Overview**: Demographics, admission details, and diagnosis
+- **Clinical Status**: Current condition, vital signs, and trends
+- **Lab & Imaging**: Key findings with trend analysis
+- **Medications & Orders**: Active treatments and pending tasks
+- **Safety Alerts**: Allergies, fall risk, code status, and precautions
+- **Task Status**: Completed vs. outstanding tasks organized by priority
+
+<Warning>
+  The AI analyzes trends in vitals, labs, and condition changes to highlight important patterns that may require attention.
+</Warning>
+
+### Image Analysis Integration
+
+Upload handoff whiteboards or documents and get instant AI analysis:
+
+- **Visual Recognition**: Extract information from photos of handoff boards
+- **Smart Merging**: Automatically integrate image data with electronic records
+- **Multi-Source Summary**: Combine patient record + image analysis for comprehensive handoff notes
+
+### Dual AI Provider Support
+
+Choose the AI model that works best for your needs:
+
+- **Claude Sonnet 4** (Anthropic): Advanced reasoning and medical terminology understanding
+- **GPT-4o** (OpenAI): Fast processing with strong pattern recognition
+
+### Editable & Persistent Notes
+
+- **Edit Mode**: Modify AI-generated notes to add clinical judgment
+- **Auto-Save**: Changes are saved to the patient record automatically
+- **Version History**: Track when handoff notes were last updated
+- **Copy to Clipboard**: Quick sharing with your team
+
+## Who Is This For?
+
+### Staff Nurses
+
+- **Incoming Shift**: Quickly get up to speed on patient status and pending tasks
+- **Outgoing Shift**: Generate comprehensive handoff notes in seconds
+- **Critical Patients**: Prioritize high-acuity patients with risk-level filtering
+
+### Charge Nurses
+
+- **Team Coordination**: View all patients and nurse assignments
+- **Resource Allocation**: Identify high-workload periods and staffing needs
+- **Quality Assurance**: Ensure consistent, thorough handoffs across the unit
+
+### Clinical Educators
+
+- **Training Tool**: Demonstrate best practices for handoff communication
+- **Standardization**: Teach structured handoff formats (SBAR, I-PASS, etc.)
+- **Documentation**: Show integration of multiple information sources
+
+## Technology Stack
+
+The application is built with modern, secure technologies:
+
+- **Frontend**: React 18 with Vite for fast development
+- **Backend**: Express.js REST API (Node.js)
+- **Database**: Supabase (PostgreSQL) with real-time subscriptions
+- **Authentication**: Supabase Auth with secure session management
+- **AI Integration**: Anthropic SDK (Claude) and OpenAI SDK
+- **Styling**: Tailwind CSS v4 with custom healthcare theme
+
+## Security & Compliance
+
+<Warning>
+  This application handles sensitive patient information. Always follow your organization's HIPAA compliance policies and security protocols.
+</Warning>
+
+### Security Features
+
+- **Secure Authentication**: Supabase Auth with encrypted sessions
+- **API Key Protection**: All AI API keys stored server-side, never exposed to browser
+- **Backend Proxy**: All AI requests go through backend server for security
+- **File Size Limits**: Uploads restricted to 10MB to prevent abuse
+- **Environment Variables**: Sensitive configuration stored in `.env` (gitignored)
+
+### Best Practices
+
+1. **Do not** commit `.env` files to version control
+2. **Do** use unique, strong passwords for nurse accounts
+3. **Do** log out when leaving the workstation
+4. **Do** follow your facility's policies for patient data access
+5. **Do** verify AI-generated content before using in clinical decisions
+
+<Note>
+  AI-generated handoff notes should supplement, not replace, clinical judgment. Always review and verify information before acting on it.
+</Note>
+
+## Next Steps
+
+Ready to get started? Follow the [Quickstart Guide](/quickstart) to set up your environment and generate your first handoff note.
+
+<Card title="Quickstart" icon="rocket" href="/quickstart">
+  Get your environment configured and generate your first AI-powered handoff note in under 10 minutes.
+</Card>

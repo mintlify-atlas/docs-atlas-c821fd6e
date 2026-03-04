@@ -1,0 +1,269 @@
+---
+title: "Patient Handoff"
+description: "Generate and manage AI-powered handoff notes from patient records"
+icon: "file-text"
+---
+
+## Overview
+
+The Patient Handoff feature enables nurses to generate comprehensive, AI-powered handoff notes from patient records. The system analyzes patient data, tasks, vitals, and medical history to create structured summaries suitable for nurse-to-nurse handoff communication.
+
+## Key Features
+
+### AI-Powered Note Generation
+
+The system uses Claude Sonnet 4 to generate handoff notes that include:
+
+- **Patient Overview** - Demographics, chief complaint, and code status
+- **Clinical Status** - Current condition and vital signs with trend analysis
+- **Lab/Imaging Findings** - Key results and trends
+- **Medications & Treatments** - Active medications and allergies
+- **Task Status** - Completed and outstanding tasks organized by priority
+- **Safety Concerns** - Fall risk, allergies, code status
+
+<Note>
+The AI prioritizes **trends** in vitals, labs, and condition changes to help incoming nurses quickly identify what's changing.
+</Note>
+
+### Incremental Updates
+
+When regenerating notes, the system compares current data with previous handoff notes to highlight:
+
+- **CHANGED:** Items that differ from previous notes
+- **NEW:** Items not mentioned in previous notes
+- **RESOLVED:** Issues that were in previous notes but are now resolved
+- **COMPLETED:** Tasks that were pending but are now done
+
+## Workflow
+
+### Generating Handoff Notes
+
+From the patient detail page at `~/workspace/source/src/components/PatientDetail.jsx:91-154`:
+
+1. Click **"Generate from Record"** button
+2. The system sends patient data including tasks to the backend
+3. AI analyzes the record and generates structured notes
+4. Notes are **automatically saved** to the database
+5. Success message confirms generation and save
+
+```jsx
+const generateHandoffNotes = async () => {
+  const response = await fetch(
+    `http://localhost:3001/api/summarize-record/${aiProvider}`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        patientData: patientDataWithCurrentTasks,
+        previousNotes: previousNotes,
+      }),
+    }
+  );
+};
+```
+
+### Task Integration
+
+The handoff notes prominently feature task status from `~/workspace/source/src/components/PatientDetail.jsx:160-176`:
+
+<CardGroup cols={2}>
+  <Card title="Completed Tasks" icon="check-circle">
+    Tasks marked as complete during the shift are listed with:
+    - Time scheduled
+    - Description
+    - Priority level
+    - Task type
+  </Card>
+  
+  <Card title="Outstanding Tasks" icon="alert-triangle">
+    Pending tasks are organized by priority:
+    - Critical
+    - High
+    - Medium
+    - Low
+  </Card>
+</CardGroup>
+
+### Editing Notes
+
+From `~/workspace/source/src/components/PatientDetail.jsx:340-366`:
+
+1. Click **"Edit Notes"** to enter edit mode
+2. Modify the text in the textarea
+3. Click **"Save Changes"** to persist updates
+4. Notes are saved with timestamp to database
+
+<Tip>
+The system uses `isGeneratingRef` flags to prevent stale data from overwriting newly generated or edited notes during database synchronization.
+</Tip>
+
+## API Endpoint
+
+### Generate Handoff Summary
+
+<CodeGroup>
+```javascript Request
+POST /api/summarize-record/claude
+
+{
+  "patientData": {
+    "demographics": { "name": "John Doe", "age": 65, "sex": "M" },
+    "vitals": { "temp": [98.6], "heartRate": [72] },
+    "medications": ["Lisinopril", "Metformin"],
+    "tasks": [
+      {
+        "id": 1,
+        "time": "22:00",
+        "description": "Administer medications",
+        "priority": "high",
+        "completed": true
+      }
+    ]
+  },
+  "previousNotes": "Previous handoff content...",
+  "imageAnalysis": "Optional image analysis content..."
+}
+```
+
+```javascript Response
+{
+  "summary": "## Changes Since Last Handoff\n\n**COMPLETED:** Medications administered at 22:00\n\n## Patient Overview\n...",
+  "provider": "claude"
+}
+```
+</CodeGroup>
+
+From `~/workspace/source/server/index.js:145-296`:
+
+<Accordion title="Claude Prompt Structure">
+The system sends a detailed prompt that includes:
+
+- Patient record JSON
+- Task completion status (total, completed, outstanding)
+- Completed tasks list with priority and type
+- Outstanding tasks requiring attention organized by priority
+- Previous handoff notes for comparison
+- Optional image analysis to integrate
+
+The prompt emphasizes:
+- Creating a "Changes Since Last Handoff" section
+- Using prefixes (CHANGED, NEW, RESOLVED, COMPLETED)
+- Highlighting trends in vitals and labs
+- Making task status prominent and scannable
+</Accordion>
+
+### Save Handoff Notes
+
+<CodeGroup>
+```javascript Request
+POST /api/patients/:id/handoff
+
+{
+  "handoffNotes": "Complete handoff notes content...",
+  "imageAnalysis": "Optional image analysis...",
+  "timestamp": "2026-03-04T10:30:00Z"
+}
+```
+
+```javascript Response
+{
+  "success": true,
+  "message": "Handoff notes saved successfully",
+  "handoffData": {
+    "handoffNotes": "...",
+    "imageAnalysis": "...",
+    "lastHandoffUpdate": "2026-03-04T10:30:00Z"
+  }
+}
+```
+</CodeGroup>
+
+From `~/workspace/source/server/index.js:469-554`
+
+## Task Management
+
+### Toggle Task Completion
+
+Tasks can be marked complete/incomplete by clicking them in the Task Status section at `~/workspace/source/src/components/PatientDetail.jsx:453-509`:
+
+<Steps>
+  <Step title="Optimistic Update">
+    UI updates immediately for instant feedback
+  </Step>
+  <Step title="API Call">
+    PATCH request sent to `/api/tasks/:id`
+  </Step>
+  <Step title="Rollback on Error">
+    If the API fails, the UI reverts to previous state
+  </Step>
+</Steps>
+
+```jsx
+const toggleTask = async (taskId) => {
+  // Optimistic update - instant UI feedback
+  setTasks((prevTasks) =>
+    prevTasks.map((t) =>
+      t.id === taskId ? { ...t, completed: !t.completed } : t
+    )
+  );
+
+  try {
+    await fetch(`http://localhost:3001/api/tasks/${taskId}`, {
+      method: "PATCH",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ completed: newCompleted }),
+    });
+  } catch (err) {
+    // Rollback on error
+    setTasks((prevTasks) =>
+      prevTasks.map((t) =>
+        t.id === taskId ? { ...t, completed: previousCompleted } : t
+      )
+    );
+  }
+};
+```
+
+<Warning>
+When handoff notes are regenerated, they reflect the current task completion status. Tasks marked complete will appear in the "Completed" section of the new notes.
+</Warning>
+
+## Features Summary
+
+<CardGroup cols={3}>
+  <Card title="Auto-Save" icon="floppy-disk">
+    Generated notes are automatically saved to the database
+  </Card>
+  
+  <Card title="Copy to Clipboard" icon="copy">
+    One-click copy of handoff notes for external use
+  </Card>
+  
+  <Card title="Trend Analysis" icon="chart-line">
+    AI highlights changes in vitals, labs, and condition
+  </Card>
+  
+  <Card title="Task Focus" icon="list-check">
+    Prominent task status section organized by priority
+  </Card>
+  
+  <Card title="Incremental Updates" icon="arrows-rotate">
+    Compare with previous notes to show changes
+  </Card>
+  
+  <Card title="Image Integration" icon="image">
+    Merge handoff images with electronic records
+  </Card>
+</CardGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Image Analysis" icon="camera" href="/features/image-analysis">
+    Learn how to upload and analyze handoff document images
+  </Card>
+  
+  <Card title="AI Providers" icon="robot" href="/features/ai-providers">
+    Understand Claude integration and configuration
+  </Card>
+</CardGroup>

@@ -1,0 +1,323 @@
+---
+title: Supabase Setup
+description: Configure your Supabase database for the Nurse Handoff Helper application
+---
+
+## Overview
+
+The Nurse Handoff Helper uses Supabase as its database and authentication backend. This guide walks through setting up your Supabase project and configuring the required database tables.
+
+<Info>
+  Supabase provides a free tier that's perfect for development and small-scale deployments. Visit [supabase.com](https://supabase.com) to create an account.
+</Info>
+
+## Create a Supabase Project
+
+1. Go to [supabase.com](https://supabase.com) and sign up or log in
+2. Click **New Project**
+3. Choose your organization
+4. Configure your project:
+   - **Name**: `nurse-handoff-helper` (or your preferred name)
+   - **Database Password**: Generate a secure password and save it
+   - **Region**: Choose the region closest to your users
+   - **Pricing Plan**: Start with the free tier
+5. Click **Create new project**
+
+Wait a few minutes for Supabase to provision your database.
+
+## Get Your API Keys
+
+Once your project is ready:
+
+1. Go to **Project Settings** (gear icon in the sidebar)
+2. Navigate to **API** section
+3. Copy the following values to your `.env` file:
+   - **Project URL** → `VITE_SUPABASE_URL` and `SUPABASE_URL`
+   - **anon public** key → `VITE_SUPABASE_ANON_KEY` and `SUPABASE_ANON_KEY`
+   - **service_role** key → `SUPABASE_SERVICE_KEY`
+
+<Warning>
+  Keep your `service_role` key secret! It bypasses Row Level Security and should never be exposed to the frontend.
+</Warning>
+
+## Database Schema
+
+The application requires the following database tables. You can create them using the Supabase SQL Editor.
+
+### Required Tables
+
+<Tabs>
+  <Tab title="patients">
+    Stores patient information and medical records.
+    
+    ```sql
+    CREATE TABLE patients (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      patient_id VARCHAR UNIQUE,
+      name VARCHAR NOT NULL,
+      mrn VARCHAR UNIQUE NOT NULL,
+      age INTEGER,
+      sex VARCHAR,
+      diagnosis TEXT,
+      condition TEXT,
+      risk_level VARCHAR DEFAULT 'medium',
+      code_status VARCHAR DEFAULT 'Full Code',
+      medications JSONB DEFAULT '[]',
+      allergies JSONB DEFAULT '[]',
+      admission_date TIMESTAMPTZ,
+      last_vitals JSONB DEFAULT '{}',
+      handoff_notes TEXT,
+      image_analysis TEXT,
+      last_handoff_update TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+  </Tab>
+  
+  <Tab title="nurses">
+    Stores nurse profiles and authentication information.
+    
+    ```sql
+    CREATE TABLE nurses (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      auth_user_id UUID UNIQUE REFERENCES auth.users(id),
+      name VARCHAR NOT NULL,
+      email VARCHAR UNIQUE NOT NULL,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+  </Tab>
+  
+  <Tab title="rooms">
+    Stores hospital room information and patient assignments.
+    
+    ```sql
+    CREATE TABLE rooms (
+      id VARCHAR PRIMARY KEY,
+      patient_id UUID REFERENCES patients(id),
+      grid_x INTEGER DEFAULT 0,
+      grid_y INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+  </Tab>
+  
+  <Tab title="tasks">
+    Stores nursing tasks and their completion status.
+    
+    ```sql
+    CREATE TABLE tasks (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      patient_id UUID REFERENCES patients(id),
+      room_id VARCHAR REFERENCES rooms(id),
+      time VARCHAR NOT NULL,
+      type VARCHAR NOT NULL,
+      description TEXT NOT NULL,
+      priority VARCHAR DEFAULT 'medium',
+      completed BOOLEAN DEFAULT FALSE,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+  </Tab>
+  
+  <Tab title="room_assignments">
+    Links nurses to their assigned rooms.
+    
+    ```sql
+    CREATE TABLE room_assignments (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      room_id VARCHAR REFERENCES rooms(id),
+      nurse_id UUID REFERENCES nurses(id),
+      assigned_at TIMESTAMPTZ DEFAULT NOW(),
+      UNIQUE(room_id, nurse_id)
+    );
+    ```
+  </Tab>
+  
+  <Tab title="logs">
+    Stores activity logs for audit purposes.
+    
+    ```sql
+    CREATE TABLE logs (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      nurse VARCHAR,
+      room VARCHAR,
+      action VARCHAR NOT NULL,
+      details TEXT,
+      time TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+  </Tab>
+</Tabs>
+
+## Enable Realtime
+
+The application uses Supabase Realtime for live updates. Enable it for the required tables:
+
+1. Go to **Database** → **Replication** in your Supabase dashboard
+2. Enable replication for these tables:
+   - `patients`
+   - `nurses`
+   - `rooms`
+   - `tasks`
+   - `room_assignments`
+   - `logs`
+
+<Info>
+  Realtime enables the application to show live updates when data changes, such as when tasks are completed or patient information is updated.
+</Info>
+
+## Row Level Security (RLS)
+
+For security, enable Row Level Security on all tables:
+
+```sql
+-- Enable RLS
+ALTER TABLE patients ENABLE ROW LEVEL SECURITY;
+ALTER TABLE nurses ENABLE ROW LEVEL SECURITY;
+ALTER TABLE rooms ENABLE ROW LEVEL SECURITY;
+ALTER TABLE tasks ENABLE ROW LEVEL SECURITY;
+ALTER TABLE room_assignments ENABLE ROW LEVEL SECURITY;
+ALTER TABLE logs ENABLE ROW LEVEL SECURITY;
+```
+
+Then create policies for authenticated users:
+
+```sql
+-- Example: Allow authenticated nurses to read all patients
+CREATE POLICY "Nurses can view all patients"
+  ON patients FOR SELECT
+  TO authenticated
+  USING (true);
+
+-- Example: Allow authenticated nurses to update patients
+CREATE POLICY "Nurses can update patients"
+  ON patients FOR UPDATE
+  TO authenticated
+  USING (true)
+  WITH CHECK (true);
+
+-- Add similar policies for other tables
+```
+
+<Tip>
+  Customize RLS policies based on your security requirements. You may want to restrict certain operations to specific nurse roles.
+</Tip>
+
+## Authentication Setup
+
+The application uses Supabase Auth for nurse login:
+
+1. Go to **Authentication** → **Providers** in Supabase
+2. Ensure **Email** is enabled
+3. Configure email templates if desired (optional)
+4. Under **Settings**:
+   - Set **Site URL** to your application URL (e.g., `http://localhost:5173` for dev)
+   - Add redirect URLs if needed
+
+## Supabase Client Configuration
+
+The application initializes two Supabase clients:
+
+### Frontend Client
+
+Used by the React application (`src/lib/supabase.js:13`):
+
+```javascript
+import { createClient } from '@supabase/supabase-js';
+
+const supabaseUrl = import.meta.env.VITE_SUPABASE_URL;
+const supabaseAnonKey = import.meta.env.VITE_SUPABASE_ANON_KEY;
+
+export const supabase = createClient(supabaseUrl, supabaseAnonKey, {
+  auth: {
+    persistSession: true,
+    autoRefreshToken: true,
+    detectSessionInUrl: true
+  }
+});
+```
+
+### Backend Client
+
+Used by the Express server (`server/index.js:32`):
+
+```javascript
+// Regular client for general operations
+const supabase = createClient(
+  process.env.SUPABASE_URL || "",
+  process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_ANON_KEY || ""
+);
+
+// Admin client for user management operations
+const supabaseAdmin = process.env.SUPABASE_SERVICE_KEY
+  ? createClient(
+      process.env.SUPABASE_URL || "",
+      process.env.SUPABASE_SERVICE_KEY,
+      {
+        auth: {
+          autoRefreshToken: false,
+          persistSession: false,
+        },
+      }
+    )
+  : null;
+```
+
+## Verify Setup
+
+Test your Supabase connection:
+
+```bash
+# Start the development server
+npm run dev
+
+# In another terminal, check if Supabase is connected
+curl http://localhost:3001/api/health
+```
+
+You should see:
+
+```json
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Connection refused or timeout errors">
+    - Verify your `SUPABASE_URL` is correct and includes `https://`
+    - Check that your Supabase project is not paused (free tier pauses after inactivity)
+    - Ensure your API keys are correct and not expired
+  </Accordion>
+  
+  <Accordion title="Authentication errors">
+    - Verify `SUPABASE_ANON_KEY` is correctly set
+    - Check that Row Level Security policies allow the operation
+    - Ensure the user is authenticated when required
+  </Accordion>
+  
+  <Accordion title="Admin operations fail">
+    - Verify `SUPABASE_SERVICE_KEY` is set correctly
+    - This key is required for creating nurse accounts and admin operations
+    - Never use the service key in frontend code
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+After setting up Supabase:
+
+1. Create nurse accounts - see [Nurse Accounts](/setup/nurse-accounts)
+2. Populate initial data (optional)
+3. Start the application with `npm start`

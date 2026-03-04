@@ -1,0 +1,569 @@
+---
+title: Generating Handoff Notes with AI
+description: Learn how to create comprehensive handoff notes using AI-powered generation
+icon: sparkles
+---
+
+The Nurse Handoff Helper uses advanced AI to generate comprehensive, accurate handoff notes from patient records. This guide explains how to use the AI generation features effectively.
+
+## Overview of AI Generation
+
+The AI system analyzes all available patient data to create structured handoff notes following best practices and clinical standards.
+
+<CardGroup cols={3}>
+  <Card title="Comprehensive" icon="list-check">
+    Includes all relevant patient information
+  </Card>
+  
+  <Card title="Structured" icon="sitemap">
+    Follows SBAR format for clarity
+  </Card>
+  
+  <Card title="Intelligent" icon="brain">
+    Highlights critical information
+  </Card>
+</CardGroup>
+
+## Generation Methods
+
+There are two primary methods for generating handoff notes:
+
+### Method 1: Generate from Patient Record
+
+This method uses structured patient data from your EHR system.
+
+<Steps>
+
+### Start Generation
+
+1. Navigate to a patient's detail view
+2. Locate the **"Generate Handoff Notes"** section in the right panel
+3. Click the **"Generate from Record"** button
+
+<Note>
+  The button displays a sparkles icon and will show "Generating..." with a loading spinner during processing.
+</Note>
+
+### Data Sources Analyzed
+
+The AI analyzes the following patient data:
+
+<AccordionGroup>
+  <Accordion title="Demographics" icon="user">
+    - Patient name, age, and sex
+    - Medical record number (MRN)
+    - Room number
+    - Code status
+  </Accordion>
+  
+  <Accordion title="Clinical Information" icon="heart-pulse">
+    - Chief complaint or admission reason
+    - Current diagnosis
+    - Medical history
+    - Allergies and medication sensitivities
+  </Accordion>
+  
+  <Accordion title="Vital Signs" icon="activity">
+    - Latest temperature reading
+    - Heart rate and rhythm
+    - Blood pressure measurements
+    - Respiratory rate
+    - Oxygen saturation (SpO2)
+  </Accordion>
+  
+  <Accordion title="Medications" icon="pills">
+    - Current medication list
+    - Dosages and routes
+    - Administration schedule
+    - Recent medication changes
+  </Accordion>
+  
+  <Accordion title="Task Status" icon="list-checks">
+    - Tasks completed during current shift
+    - Outstanding tasks requiring attention
+    - Priority levels for pending tasks
+    - Scheduled task times
+  </Accordion>
+  
+  <Accordion title="Previous Notes" icon="clock-rotate-left">
+    - Previous handoff notes for continuity
+    - Significant changes since last handoff
+    - Ongoing concerns or issues
+  </Accordion>
+</AccordionGroup>
+
+### Processing Time
+
+Generation typically takes **5-15 seconds** depending on:
+- Complexity of the patient record
+- Amount of historical data
+- Current server load
+- Selected AI provider (Claude, OpenAI, or Gemini)
+
+<Tip>
+  A loading indicator with "Generating..." text appears during processing. You can continue viewing patient information while generation completes.
+</Tip>
+
+### Auto-Save
+
+Generated notes are **automatically saved** to the database upon completion:
+- No manual save action required
+- Notes are immediately available to all users
+- Timestamp records when notes were generated
+- Previous versions are retained for audit purposes
+
+<Info>
+  The system displays a success message confirming "Handoff notes generated and saved successfully!" when complete.
+</Info>
+
+</Steps>
+
+### Method 2: Upload and Analyze Handoff Image
+
+This method uses OCR and AI to extract information from images of handoff documents.
+
+<Steps>
+
+### Upload an Image
+
+1. Click the **"Upload Handoff Image"** button (camera icon)
+2. Select an image file from your device
+3. Supported formats:
+   - JPEG/JPG
+   - PNG
+   - HEIC (iPhone photos)
+   - WebP
+
+**Ideal Image Sources:**
+- Photos of handwritten handoff notes
+- Scanned printed reports
+- Pictures of whiteboard documentation
+- Digital screenshots of external systems
+
+<Warning>
+  Ensure images are clear and well-lit. Blurry or low-resolution images may result in inaccurate text extraction.
+</Warning>
+
+### Preview and Verify
+
+After upload:
+- Image preview appears showing your uploaded file
+- Small "X" button in corner allows you to remove and try again
+- File name and size may be displayed
+
+<Tip>
+  Review the preview to ensure the image is oriented correctly and all text is legible before proceeding.
+</Tip>
+
+### Analyze Image
+
+1. Click **"Analyze & Add to Notes"** button
+2. The AI will:
+   - Extract text from the image using OCR
+   - Interpret medical terminology and abbreviations
+   - Identify key clinical information
+   - Structure the extracted data
+
+**Analysis Processing:**
+- Takes **10-20 seconds** for typical handoff images
+- Loading spinner with "Analyzing..." text displays progress
+- More complex images may take longer
+
+### Integration with Patient Record
+
+After image analysis:
+1. Extracted information is combined with existing patient record data
+2. A new comprehensive handoff note is automatically generated
+3. The integrated note includes:
+   - Information from the image
+   - Current patient record data
+   - Synthesized analysis from both sources
+
+<Note>
+  The system displays: "Image analyzed! Regenerating integrated handoff notes..." followed by "Image analyzed and integrated into handoff notes!" when complete.
+</Note>
+
+### Clear Image
+
+To remove an uploaded image:
+- Click the "X" button on the image preview
+- This removes the image but preserves any previously generated notes
+- Upload a different image if needed
+
+</Steps>
+
+## AI Provider Selection
+
+The Nurse Handoff Helper supports multiple AI providers:
+
+<Tabs>
+  <Tab title="Claude (Anthropic)">
+    **Best for**: Comprehensive clinical analysis and nuanced medical reasoning
+    
+    **Strengths**:
+    - Excellent at understanding complex medical terminology
+    - Strong contextual awareness
+    - Detailed, well-structured outputs
+    - Reliable interpretation of clinical scenarios
+    
+    **Model**: Claude 3.5 Sonnet
+  </Tab>
+  
+  <Tab title="OpenAI">
+    **Best for**: Quick generation with consistent formatting
+    
+    **Strengths**:
+    - Fast response times
+    - Consistent output format
+    - Good general medical knowledge
+    - Cost-effective for high-volume use
+    
+    **Model**: GPT-4 or GPT-4 Turbo
+  </Tab>
+  
+  <Tab title="Gemini (Google)">
+    **Best for**: Image analysis and multimodal understanding
+    
+    **Strengths**:
+    - Superior image OCR and interpretation
+    - Excellent at extracting text from photos
+    - Good integration of visual and text data
+    - Strong medical knowledge base
+    
+    **Model**: Gemini 1.5 Pro
+  </Tab>
+</Tabs>
+
+<Note>
+  AI provider selection is typically configured at the system level. Contact your administrator if you need to change providers.
+</Note>
+
+## Generated Note Structure
+
+AI-generated handoff notes typically follow the **SBAR format** (Situation, Background, Assessment, Recommendation):
+
+### SBAR Framework
+
+<Tabs>
+  <Tab title="Situation">
+    **Current patient status and immediate concerns**
+    
+    Includes:
+    - Patient identification (name, age, MRN, room)
+    - Current diagnosis or chief complaint
+    - Code status
+    - Key alerts (allergies, fall risk, isolation precautions)
+    
+    **Example**:
+    ```
+    Patient: John Smith, 72-year-old male
+    Room: 312B | MRN: 123456789
+    Diagnosis: Acute exacerbation of CHF
+    Code Status: Full Code
+    Allergies: Penicillin (rash)
+    ```
+  </Tab>
+  
+  <Tab title="Background">
+    **Relevant medical history and context**
+    
+    Includes:
+    - Pertinent medical history
+    - Reason for admission
+    - Hospital course summary
+    - Significant procedures or interventions
+    
+    **Example**:
+    ```
+    Medical History: CHF, HTN, Type 2 DM, CKD Stage 3
+    Admitted: 2 days ago with worsening dyspnea and edema
+    Treatment: IV Lasix, fluid restriction, daily weights
+    Improving: Dyspnea decreased, output positive 1.2L yesterday
+    ```
+  </Tab>
+  
+  <Tab title="Assessment">
+    **Current condition and vital signs**
+    
+    Includes:
+    - Latest vital signs with trends
+    - Current medications and recent changes
+    - Completed assessments and interventions
+    - Response to treatment
+    
+    **Example**:
+    ```
+    Vitals (1600): BP 138/82, HR 78, RR 18, SpO2 94% on 2L NC, Temp 98.6°F
+    I/O: Intake 1200mL, Output 1850mL (positive balance)
+    Weight: Down 2kg from admission
+    Pain: 2/10 generalized discomfort
+    Activity: Up to chair with assist, ambulating in room
+    ```
+  </Tab>
+  
+  <Tab title="Recommendation">
+    **Outstanding tasks and follow-up needs**
+    
+    Includes:
+    - Pending tasks with priorities
+    - Scheduled medications and treatments
+    - Items requiring attention during next shift
+    - Follow-up needed with providers
+    
+    **Example**:
+    ```
+    Outstanding Tasks:
+    - 1800: Evening medications due (Lasix 40mg IV, Metoprolol 25mg PO)
+    - 2000: Vital signs and I/O documentation
+    - 2200: Bedtime medications
+    - Monitor: Daily weight in AM, fluid restriction compliance
+    - Follow-up: Cardiology consult scheduled for tomorrow
+    ```
+  </Tab>
+</Tabs>
+
+### Formatting Features
+
+Generated notes include:
+
+<CardGroup cols={2}>
+  <Card title="Section Headers" icon="heading">
+    Clear headers separate different sections for easy scanning
+  </Card>
+  
+  <Card title="Bullet Points" icon="list">
+    Key information presented in easy-to-read lists
+  </Card>
+  
+  <Card title="Timestamps" icon="clock">
+    Scheduled tasks include specific times
+  </Card>
+  
+  <Card title="Priority Indicators" icon="triangle-exclamation">
+    Critical items are highlighted or marked urgent
+  </Card>
+</CardGroup>
+
+## Regenerating Notes
+
+You can regenerate handoff notes at any time:
+
+### When to Regenerate
+
+<AccordionGroup>
+  <Accordion title="Patient status changes">
+    Significant changes in condition, vital signs, or treatment plan warrant regeneration to ensure accurate handoff.
+  </Accordion>
+  
+  <Accordion title="Tasks completed">
+    After completing multiple tasks, regenerate to update the outstanding tasks section.
+  </Accordion>
+  
+  <Accordion title="New information available">
+    New test results, provider orders, or consultation notes should be incorporated.
+  </Accordion>
+  
+  <Accordion title="Shift transition approaching">
+    Regenerate 30-45 minutes before shift end for the most current information.
+  </Accordion>
+</AccordionGroup>
+
+### Regeneration Process
+
+<Steps>
+  <Step title="Click Generate Again">
+    Simply click **"Generate from Record"** button again
+  </Step>
+  
+  <Step title="AI Analyzes Current State">
+    The AI will:
+    - Analyze all current patient data
+    - Compare with previous notes
+    - Identify what has changed
+    - Incorporate updates seamlessly
+  </Step>
+  
+  <Step title="Previous Notes Preserved">
+    Previous notes provide context:
+    - Continuity maintained
+    - Significant changes highlighted
+    - Historical context considered
+  </Step>
+  
+  <Step title="New Notes Auto-Saved">
+    Updated notes replace previous version while maintaining history
+  </Step>
+</Steps>
+
+<Info>
+  Previous handoff notes are included in the AI prompt to maintain continuity and highlight changes since last generation.
+</Info>
+
+## Best Practices
+
+<CardGroup cols={2}>
+  <Card title="Update Tasks First" icon="list-check">
+    Mark tasks as completed before generating notes to ensure accuracy
+  </Card>
+  
+  <Card title="Verify Vitals" icon="heart-pulse">
+    Ensure latest vital signs are documented in the system
+  </Card>
+  
+  <Card title="Review for Accuracy" icon="magnifying-glass">
+    Always review generated notes for accuracy and completeness
+  </Card>
+  
+  <Card title="Edit as Needed" icon="pen-to-square">
+    Customize generated notes to add context or clarify information
+  </Card>
+  
+  <Card title="Generate Early" icon="clock">
+    Start generation 30-45 minutes before shift end to allow review time
+  </Card>
+  
+  <Card title="Use Image Upload" icon="camera">
+    Supplement with images when written notes contain information not in EHR
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Generation fails or times out">
+    **Possible causes**:
+    - Network connectivity issues
+    - AI service temporarily unavailable
+    - Patient record missing required data
+    
+    **Solutions**:
+    1. Check network connection
+    2. Wait 30 seconds and try again
+    3. Verify patient record has required fields populated
+    4. Contact IT if issue persists
+  </Accordion>
+  
+  <Accordion title="Notes are incomplete or inaccurate">
+    **Possible causes**:
+    - Missing data in patient record
+    - Outdated information in EHR
+    - AI misinterpretation of clinical data
+    
+    **Solutions**:
+    1. Verify all patient data is current in the system
+    2. Use the Edit function to correct or add information
+    3. Regenerate after updating patient record
+    4. Report systematic issues to your administrator
+  </Accordion>
+  
+  <Accordion title="Image analysis fails">
+    **Possible causes**:
+    - Image quality too poor
+    - File format not supported
+    - File size too large
+    - Text in image is illegible
+    
+    **Solutions**:
+    1. Ensure image is clear, well-lit, and in focus
+    2. Use JPEG or PNG format
+    3. Reduce file size if over 10MB
+    4. Retake photo with better lighting/focus
+    5. Manually type information if OCR continues to fail
+  </Accordion>
+  
+  <Accordion title="Notes not saving">
+    **Possible causes**:
+    - Database connectivity issue
+    - Insufficient permissions
+    - Patient record locked by another user
+    
+    **Solutions**:
+    1. Error message will display if save fails
+    2. Check network connection
+    3. Try clicking Save again
+    4. Verify you have write permissions
+    5. Contact IT if issue persists
+    
+    <Warning>
+      Notes are automatically saved after generation, so manual save failures are rare.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+## Generation Speed and Performance
+
+### Expected Timing
+
+<ResponseField name="Simple cases" type="duration">
+  5-8 seconds - Basic patient record with standard information
+</ResponseField>
+
+<ResponseField name="Complex cases" type="duration">
+  10-15 seconds - Extensive medical history, multiple medications, many tasks
+</ResponseField>
+
+<ResponseField name="Image analysis" type="duration">
+  10-20 seconds - Depends on image clarity and text density
+</ResponseField>
+
+<ResponseField name="Integrated generation" type="duration">
+  15-25 seconds - Image analysis + record integration + note generation
+</ResponseField>
+
+### Performance Factors
+
+<Tabs>
+  <Tab title="Patient Complexity">
+    - Number of medications
+    - Length of medical history
+    - Number of active tasks
+    - Amount of previous notes
+  </Tab>
+  
+  <Tab title="System Load">
+    - Number of concurrent users
+    - Time of day (shift change = higher load)
+    - AI service availability
+    - Network latency
+  </Tab>
+  
+  <Tab title="AI Provider">
+    - Different models have different speeds
+    - Claude: Comprehensive but slightly slower
+    - OpenAI: Fast and consistent
+    - Gemini: Best for images, moderate text speed
+  </Tab>
+</Tabs>
+
+## Privacy and Security
+
+<Warning>
+  Patient data is handled according to HIPAA regulations and your facility's privacy policies.
+</Warning>
+
+**Security Measures:**
+- All data transmitted over encrypted connections (HTTPS/TLS)
+- AI providers are HIPAA-compliant and have Business Associate Agreements (BAA)
+- Patient identifiers are handled securely
+- Access controlled by role-based permissions
+- Audit logs track all access and modifications
+
+<Info>
+  Generated notes are stored in your facility's secure database, not retained by AI providers.
+</Info>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Editing Notes" icon="pen-to-square" href="/guide/editing-saving">
+    Learn how to customize and refine generated notes
+  </Card>
+  
+  <Card title="Complete Workflow" icon="workflow" href="/guide/workflow">
+    See how note generation fits into the full handoff process
+  </Card>
+  
+  <Card title="Patient Records" icon="folder-open" href="/guide/patient-records">
+    Ensure patient data is complete for optimal generation
+  </Card>
+</CardGroup>

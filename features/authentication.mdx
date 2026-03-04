@@ -1,0 +1,557 @@
+---
+title: "Authentication"
+description: "Supabase-powered authentication system for secure nurse access"
+icon: "lock"
+---
+
+## Overview
+
+Nurse Handoff Helper uses **Supabase Auth** to provide secure, healthcare-grade authentication. The system links authenticated users to nurse profiles in the database, enabling role-based access and audit trails.
+
+## Architecture
+
+<Steps>
+  <Step title="Supabase Auth">
+    Handles user authentication, sessions, and security
+  </Step>
+  <Step title="Nurses Table">
+    Stores nurse profiles linked to auth users via `auth_user_id`
+  </Step>
+  <Step title="Session Management">
+    Frontend monitors auth state and persists sessions
+  </Step>
+  <Step title="Automatic Sync">
+    Auth users are automatically linked to nurse records
+  </Step>
+</Steps>
+
+## Authentication Flow
+
+### Initial Load
+
+From `~/workspace/source/src/App.jsx:14-65`:
+
+```jsx
+const [user, setUser] = useState(null);
+const [loading, setLoading] = useState(true);
+
+useEffect(() => {
+  const initAuth = async () => {
+    await checkSession();
+    
+    // Listen for auth state changes
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      async (event, session) => {
+        if (event === 'SIGNED_IN' && session) {
+          await loadUserData(session.user);
+        } else if (event === 'SIGNED_OUT') {
+          setUser(null);
+        }
+      }
+    );
+  };
+  
+  initAuth();
+}, []);
+```
+
+<Note>
+The app includes a 15-second timeout to prevent infinite loading states if auth initialization hangs.
+</Note>
+
+### Session Check
+
+From `~/workspace/source/src/App.jsx:67-92`:
+
+<CodeGroup>
+```jsx Check Session
+const checkSession = async () => {
+  const { data: { session }, error } = await supabase.auth.getSession();
+  
+  if (session?.user) {
+    await loadUserData(session.user);
+  } else {
+    console.log('No active session, showing login page');
+  }
+  
+  setLoading(false);
+};
+```
+
+```jsx Load User Data
+const loadUserData = async (authUser) => {
+  // Get nurse record from database
+  const { data: nurseData } = await supabase
+    .from('nurses')
+    .select('*')
+    .or(`email.eq.${authUser.email},auth_user_id.eq.${authUser.id}`)
+    .single();
+    
+  if (nurseData) {
+    setUser({ ...nurseData, authUser });
+  } else {
+    // Create nurse record if it doesn't exist
+    await createNurseRecord(authUser);
+  }
+};
+```
+</CodeGroup>
+
+### Auto-Create Nurse Records
+
+If an authenticated user doesn't have a nurse profile, one is created automatically at `~/workspace/source/src/App.jsx:114-138`:
+
+```jsx
+const { data: newNurse, error } = await supabase
+  .from('nurses')
+  .insert([{
+    email: authUser.email,
+    name: authUser.user_metadata?.name || authUser.email.split('@')[0],
+    auth_user_id: authUser.id,
+  }])
+  .select()
+  .single();
+
+if (newNurse) {
+  setUser({ ...newNurse, authUser });
+}
+```
+
+<Warning>
+If nurse record creation fails, the system uses a fallback user object with basic info to prevent blocking access.
+</Warning>
+
+## Database Schema
+
+### Nurses Table
+
+```sql
+CREATE TABLE nurses (
+  id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
+  email TEXT UNIQUE NOT NULL,
+  name TEXT NOT NULL,
+  auth_user_id UUID UNIQUE,  -- Links to Supabase auth.users
+  created_at TIMESTAMP DEFAULT NOW(),
+  updated_at TIMESTAMP DEFAULT NOW()
+);
+```
+
+### Auth Users Table (Supabase)
+
+Managed by Supabase Auth, includes:
+- `id` - UUID primary key
+- `email` - User email
+- `encrypted_password` - Hashed password
+- `email_confirmed_at` - Email verification timestamp
+- `user_metadata` - Custom data (name, etc.)
+- `last_sign_in_at` - Session tracking
+
+## Admin Account Creation
+
+### Bulk Create Accounts
+
+The backend provides an admin endpoint to create auth accounts for existing nurses at `~/workspace/source/server/index.js:580-717`:
+
+**Endpoint:** `POST /api/nurses/create-accounts`
+
+<Warning>
+**Requires Service Role Key** - This endpoint needs `SUPABASE_SERVICE_KEY` in environment variables for admin operations.
+</Warning>
+
+<CodeGroup>
+```bash Request
+curl -X POST http://localhost:3001/api/nurses/create-accounts
+```
+
+```json Response
+{
+  "success": true,
+  "message": "Processed 5 nurses",
+  "results": [
+    {
+      "nurse_id": "uuid-1",
+      "email": "nurse1@hospital.com",
+      "status": "created",
+      "message": "Account created. Temporary password: Temp12345",
+      "tempPassword": "Temp12345"
+    },
+    {
+      "nurse_id": "uuid-2",
+      "email": "nurse2@hospital.com",
+      "status": "linked",
+      "message": "Linked to existing auth account"
+    },
+    {
+      "nurse_id": "uuid-3",
+      "email": "nurse3@hospital.com",
+      "status": "skipped",
+      "message": "Already has auth account"
+    }
+  ]
+}
+```
+</CodeGroup>
+
+The endpoint:
+
+1. **Scans** all nurses in the database
+2. **Skips** nurses with existing `auth_user_id`
+3. **Links** nurses to existing auth accounts by email
+4. **Creates** new auth accounts with temporary passwords
+5. **Updates** nurse records with `auth_user_id`
+
+```javascript
+const { data: authUser } = await supabaseAdmin.auth.admin.createUser({
+  email: nurse.email,
+  password: tempPassword,
+  email_confirm: true,  // Auto-confirm email
+  user_metadata: {
+    name: nurse.name,
+    nurse_id: nurse.id,
+  },
+});
+
+// Link auth user to nurse record
+await supabase
+  .from('nurses')
+  .update({ auth_user_id: authUser.user.id })
+  .eq('id', nurse.id);
+```
+
+From `~/workspace/source/server/index.js:658-683`
+
+<Tip>
+Temporary passwords should be changed by nurses on first login for security.
+</Tip>
+
+## Session Management
+
+### Persistent Sessions
+
+Supabase automatically handles session persistence using:
+
+- **localStorage** - Stores refresh tokens
+- **Session tokens** - Short-lived access tokens
+- **Auto-refresh** - Refreshes tokens before expiry
+
+### Auth State Listener
+
+From `~/workspace/source/src/App.jsx:30-40`:
+
+```jsx
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN' && session) {
+    await loadUserData(session.user);
+  } else if (event === 'SIGNED_OUT') {
+    setUser(null);
+  }
+});
+```
+
+Supported events:
+- `SIGNED_IN` - User logged in
+- `SIGNED_OUT` - User logged out
+- `TOKEN_REFRESHED` - Access token refreshed
+- `USER_UPDATED` - User profile updated
+- `PASSWORD_RECOVERY` - Password reset initiated
+
+### Logout
+
+From `~/workspace/source/src/App.jsx:163-167`:
+
+```jsx
+const handleLogout = async () => {
+  await supabase.auth.signOut();
+  setUser(null);
+  setView('dashboard');
+};
+```
+
+## Configuration
+
+### Environment Variables
+
+```bash .env
+# Supabase Configuration
+SUPABASE_URL=https://your-project.supabase.co
+SUPABASE_ANON_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...
+SUPABASE_SERVICE_KEY=eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...  # For admin ops
+```
+
+### Client Initialization
+
+The Supabase client is initialized once and shared across the app:
+
+```javascript
+// src/lib/supabase.js
+import { createClient } from '@supabase/supabase-js';
+
+export const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+```
+
+### Backend Clients
+
+From `~/workspace/source/server/index.js:32-49`:
+
+<CodeGroup>
+```javascript Standard Client
+const supabase = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_ANON_KEY
+);
+```
+
+```javascript Admin Client
+const supabaseAdmin = createClient(
+  process.env.SUPABASE_URL,
+  process.env.SUPABASE_SERVICE_KEY,
+  {
+    auth: {
+      autoRefreshToken: false,
+      persistSession: false,
+    },
+  }
+);
+```
+</CodeGroup>
+
+<Note>
+The admin client is only initialized if `SUPABASE_SERVICE_KEY` is provided. It's used for privileged operations like creating user accounts.
+</Note>
+
+## Security Features
+
+<CardGroup cols={2}>
+  <Card title="Row Level Security" icon="shield-halved">
+    Database policies ensure nurses only access their assigned patients
+  </Card>
+  
+  <Card title="Password Hashing" icon="key">
+    Supabase uses bcrypt for secure password storage
+  </Card>
+  
+  <Card title="JWT Tokens" icon="id-card">
+    Short-lived access tokens with automatic refresh
+  </Card>
+  
+  <Card title="Email Verification" icon="envelope-circle-check">
+    Optional email confirmation for new accounts
+  </Card>
+</CardGroup>
+
+## User Interface
+
+### Loading State
+
+From `~/workspace/source/src/App.jsx:169-180`:
+
+```jsx
+if (loading) {
+  return (
+    <div style={{ 
+      display: 'flex', 
+      alignItems: 'center', 
+      justifyContent: 'center', 
+      minHeight: '100vh' 
+    }}>
+      <div>Loading...</div>
+    </div>
+  );
+}
+```
+
+### Login View
+
+From `~/workspace/source/src/App.jsx:182-184`:
+
+```jsx
+if (!user) {
+  return <Login onLogin={handleLogin} />;
+}
+```
+
+### Authenticated View
+
+From `~/workspace/source/src/App.jsx:186-204`:
+
+```jsx
+return (
+  <div className="app-root">
+    <header className="app-header">
+      <div className="app-title">Handoff - Nurse Portal</div>
+      <div className="app-nav">
+        <span className="welcome">{user.name}</span>
+        <button onClick={handleLogout}>Logout</button>
+      </div>
+    </header>
+    
+    <main className="app-main">
+      <Dashboard />
+    </main>
+  </div>
+);
+```
+
+## API Authentication
+
+While the current implementation doesn't require auth tokens for API calls, it's recommended to add them:
+
+<CodeGroup>
+```javascript Get Session Token
+const { data: { session } } = await supabase.auth.getSession();
+const token = session?.access_token;
+```
+
+```javascript API Call with Auth
+fetch('http://localhost:3001/api/patients', {
+  headers: {
+    'Authorization': `Bearer ${token}`,
+    'Content-Type': 'application/json'
+  }
+});
+```
+
+```javascript Backend Verification
+const authHeader = req.headers.authorization;
+const token = authHeader?.replace('Bearer ', '');
+
+const { data: { user }, error } = await supabase.auth.getUser(token);
+
+if (error || !user) {
+  return res.status(401).json({ error: 'Unauthorized' });
+}
+```
+</CodeGroup>
+
+<Warning>
+**Production Security** - For production deployments, implement API authentication to prevent unauthorized access to patient data.
+</Warning>
+
+## Health Check
+
+Verify Supabase connection:
+
+<CodeGroup>
+```bash Request
+curl http://localhost:3001/api/health
+```
+
+```json Response
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+</CodeGroup>
+
+From `~/workspace/source/server/index.js:52-60`
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Infinite Loading">
+    **Symptoms:** App shows "Loading..." indefinitely
+    
+    **Causes:**
+    - Supabase client not initialized
+    - Network issues
+    - Invalid environment variables
+    
+    **Solutions:**
+    - Check `.env` file has `SUPABASE_URL` and `SUPABASE_ANON_KEY`
+    - Verify Supabase project is active
+    - Check browser console for errors
+    - Wait for 15-second timeout to trigger
+  </Accordion>
+  
+  <Accordion title="Login Failed">
+    **Symptoms:** Cannot log in with valid credentials
+    
+    **Causes:**
+    - Email not confirmed
+    - User disabled
+    - Wrong environment
+    
+    **Solutions:**
+    - Check Supabase Auth dashboard for user status
+    - Verify email is confirmed
+    - Reset password via forgot password flow
+    - Check for typos in email/password
+  </Accordion>
+  
+  <Accordion title="Nurse Record Not Found">
+    **Symptoms:** User authenticates but nurse data missing
+    
+    **Causes:**
+    - Auth user not linked to nurse record
+    - Database query failed
+    
+    **Solutions:**
+    - System creates nurse record automatically
+    - Check `nurses` table in Supabase dashboard
+    - Verify `auth_user_id` is set correctly
+    - Run `/api/nurses/create-accounts` to link accounts
+  </Accordion>
+  
+  <Accordion title="Service Key Required">
+    **Symptoms:** Admin endpoints return 503 error
+    
+    **Causes:**
+    - `SUPABASE_SERVICE_KEY` not set
+    
+    **Solutions:**
+    - Add service role key to `.env` file
+    - Get key from Supabase dashboard → Settings → API
+    - Restart server after adding key
+  </Accordion>
+</AccordionGroup>
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Password Policies">
+    - Require minimum 8 characters
+    - Include uppercase, lowercase, numbers
+    - Force password change for temporary passwords
+    - Implement password reset flow
+  </Accordion>
+  
+  <Accordion title="Session Security">
+    - Set appropriate token expiry times
+    - Implement auto-logout on inactivity
+    - Clear sensitive data on logout
+    - Use secure, httpOnly cookies in production
+  </Accordion>
+  
+  <Accordion title="Account Management">
+    - Implement email verification
+    - Add multi-factor authentication
+    - Log authentication events
+    - Monitor failed login attempts
+  </Accordion>
+  
+  <Accordion title="Data Protection">
+    - Enable Row Level Security (RLS)
+    - Restrict API access to authenticated users
+    - Audit access to patient records
+    - Implement role-based permissions
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={2}>
+  <Card title="Patient Handoff" icon="file-text" href="/features/patient-handoff">
+    Learn about handoff note generation
+  </Card>
+  
+  <Card title="Supabase Setup" icon="database" href="/setup/supabase">
+    Explore the complete database structure and setup
+  </Card>
+</CardGroup>

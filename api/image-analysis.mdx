@@ -1,0 +1,202 @@
+---
+title: Image Analysis
+description: Analyze handoff documents and whiteboards with AI
+---
+
+## POST /api/analyze-image/claude
+
+Analyze a handoff document or whiteboard image using Claude AI to extract patient information, vital signs, medications, tasks, and clinical notes.
+
+<Note>
+  Requires `ANTHROPIC_API_KEY` in environment variables.
+</Note>
+
+### Request
+
+This endpoint accepts `multipart/form-data` for file uploads.
+
+<ParamField body="image" type="file" required>
+  Image file of the handoff document or whiteboard. Supported formats: JPEG, PNG, WebP, GIF.
+  Maximum file size: 10MB.
+</ParamField>
+
+### Request Example
+
+<CodeGroup>
+
+```bash cURL
+curl -X POST http://localhost:3001/api/analyze-image/claude \
+  -F "image=@/path/to/handoff-whiteboard.jpg"
+```
+
+```javascript fetch
+const formData = new FormData();
+formData.append('image', fileInput.files[0]);
+
+const response = await fetch('http://localhost:3001/api/analyze-image/claude', {
+  method: 'POST',
+  body: formData
+});
+
+const data = await response.json();
+console.log(data.summary);
+```
+
+```python Python
+import requests
+
+with open('handoff-whiteboard.jpg', 'rb') as f:
+    files = {'image': f}
+    response = requests.post(
+        'http://localhost:3001/api/analyze-image/claude',
+        files=files
+    )
+    data = response.json()
+    print(data['summary'])
+```
+
+</CodeGroup>
+
+### Response
+
+<ResponseField name="summary" type="string">
+  AI-generated analysis of the handoff image, including:
+  - Patient overview and Shift-Level Forecast
+  - Current clinical status and vital signs
+  - Key lab/imaging findings and trends
+  - Active medications and treatments
+  - Task status (completed and outstanding)
+  - Safety concerns (allergies, fall risk, code status)
+</ResponseField>
+
+<ResponseField name="provider" type="string">
+  AI provider used for analysis. Always returns `"claude"` for this endpoint.
+</ResponseField>
+
+### Response Example
+
+<CodeGroup>
+
+```json Success Response
+{
+  "summary": "## Patient Overview\n\nPatient: John Doe, 67M\nMRN: 123456\nRoom: 401A\nDiagnosis: Acute MI\n\n## Current Clinical Status\n\nVitals (18:00):\n- BP: 142/88\n- HR: 78\n- SpO2: 96% on 2L NC\n- Temp: 98.6°F\n\nTrend: BP decreasing from 158/92 this morning (improved)\n\n## Active Medications\n\n- Aspirin 81mg daily\n- Metoprolol 25mg BID\n- Atorvastatin 40mg HS\n\n## Task Status\n\n### Completed Tasks\n✓ 14:00 - Troponin draw (HIGH priority)\n✓ 16:00 - EKG completed\n✓ 18:00 - Vitals check\n\n### Outstanding Tasks\n⚠ 20:00 - Evening medications (HIGH priority)\n⚠ 22:00 - Vitals recheck (MEDIUM priority)\n⚠ 00:00 - Repeat troponin (CRITICAL priority)\n\n## Shift-Level Forecast\n\n⛈️ High workload spike predicted at midnight\n- Troponin labs returning\n- Vitals rechecks\n- Possible MD notification if troponin elevated\n\n☀️ Stable period from 02:00-06:00\n\n## Safety Concerns\n\n- Allergies: Penicillin\n- Fall risk: LOW\n- Code status: Full Code",
+  "provider": "claude"
+}
+```
+
+```json Error - No Image
+{
+  "error": "No image file provided"
+}
+```
+
+```json Error - Service Unavailable
+{
+  "error": "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file."
+}
+```
+
+</CodeGroup>
+
+### Error Responses
+
+<Expandable title="400 Bad Request">
+  **No image file provided**
+  ```json
+  {
+    "error": "No image file provided"
+  }
+  ```
+</Expandable>
+
+<Expandable title="500 Internal Server Error">
+  **Claude API Error**
+  ```json
+  {
+    "error": "Failed to analyze image with Claude",
+    "details": "API error message"
+  }
+  ```
+</Expandable>
+
+<Expandable title="503 Service Unavailable">
+  **Claude Not Configured**
+  ```json
+  {
+    "error": "Claude API is not configured. Please add ANTHROPIC_API_KEY to .env file."
+  }
+  ```
+</Expandable>
+
+## Analysis Features
+
+### What Claude Extracts
+
+The AI model (`claude-sonnet-4-20250514`) analyzes the image and extracts:
+
+<CardGroup cols={2}>
+  <Card title="Patient Information" icon="user">
+    Name, age, MRN, room number, diagnosis
+  </Card>
+  <Card title="Vital Signs" icon="heart-pulse">
+    BP, HR, SpO2, temperature, respiratory rate with trends
+  </Card>
+  <Card title="Clinical Data" icon="flask">
+    Lab results, imaging findings, trends over time
+  </Card>
+  <Card title="Medications" icon="pills">
+    Active medications, dosages, schedules
+  </Card>
+  <Card title="Tasks" icon="list-check">
+    Completed and outstanding tasks with priorities
+  </Card>
+  <Card title="Safety Info" icon="shield">
+    Allergies, fall risk, code status, precautions
+  </Card>
+</CardGroup>
+
+### Shift-Level Forecast
+
+The analysis includes a "weather forecast" for the shift:
+
+- **High workload periods**: Times when multiple tasks cluster
+- **Stable periods**: Expected quiet times
+- **Predicted events**: Anticipated lab results, scheduled procedures
+- **Visual timeline**: Color-coded workload intensity
+
+### Trend Highlighting
+
+The AI emphasizes trends in:
+- Vital signs (improving, worsening, stable)
+- Lab values (rising troponin, normalizing electrolytes)
+- Clinical condition (deteriorating, stable, improving)
+
+## Best Practices
+
+<AccordionGroup>
+  <Accordion title="Image Quality">
+    - Use good lighting when photographing whiteboards
+    - Ensure text is legible and in focus
+    - Include the entire handoff document in frame
+    - Avoid glare and reflections
+  </Accordion>
+  
+  <Accordion title="File Formats">
+    - JPEG/JPG: Best for photographs
+    - PNG: Best for screenshots or digital documents
+    - Keep files under 10MB
+  </Accordion>
+  
+  <Accordion title="Integration">
+    - Combine with `/api/summarize-record/claude` for comprehensive handoffs
+    - Pass the `summary` to the record summarization endpoint as `imageAnalysis`
+    - This merges whiteboard info with electronic health records
+  </Accordion>
+</AccordionGroup>
+
+## OpenAI Endpoint
+
+<Note>
+  The OpenAI endpoint `/api/analyze-image/openai` is not currently implemented in the source code.
+  Only Claude is supported at this time.
+</Note>

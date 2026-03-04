@@ -1,0 +1,400 @@
+---
+title: Viewing and Managing Patient Records
+description: Comprehensive guide to accessing and managing patient information
+icon: folder-open
+---
+
+Patient records are the foundation of effective handoffs. This guide explains how to view, navigate, and manage patient information in the Nurse Handoff Helper.
+
+## Accessing Patient Records
+
+There are two primary ways to access patient records:
+
+<CardGroup cols={2}>
+  <Card title="From Dashboard" icon="grid">
+    Click any patient room card in the Rooms view to open their full record
+  </Card>
+  
+  <Card title="From Patient Records Page" icon="list">
+    Access a complete list of all patients with search and filter capabilities
+  </Card>
+</CardGroup>
+
+## Patient Record Structure
+
+Each patient record is organized into two main sections:
+
+### Left Panel: Clinical Information
+
+The left panel displays comprehensive patient details for quick reference during handoffs.
+
+<Steps>
+
+### Patient Demographics
+
+**Header Section:**
+- **Patient Name**: Full name displayed prominently
+- **Room Number**: Current room assignment badge
+- **Patient ID**: Medical record number (MRN) for positive identification
+- **Age and Sex**: Basic demographic information
+
+<Tip>
+  Always verify the patient ID (MRN) matches your handoff documentation to ensure you're viewing the correct patient.
+</Tip>
+
+### Chief Complaint
+
+The chief complaint section shows:
+- Primary reason for admission or current hospitalization
+- Current condition summary
+- Key concerns requiring attention
+
+**Example Chief Complaints:**
+- "Chest pain with shortness of breath"
+- "Post-operative day 2 following hip replacement"
+- "Acute exacerbation of COPD"
+
+### Clinical Details
+
+<AccordionGroup>
+  <Accordion title="Code Status">
+    The patient's resuscitation preferences:
+    - **Full Code**: All resuscitative measures
+    - **DNR** (Do Not Resuscitate): No CPR
+    - **DNI** (Do Not Intubate): No mechanical ventilation
+    - **Comfort Care**: Focus on comfort measures only
+    
+    <Warning>
+      Code status is critical information. Verify this is current at the start of every shift.
+    </Warning>
+  </Accordion>
+  
+  <Accordion title="Medical History">
+    Significant past medical conditions that affect current care:
+    - Chronic diseases (diabetes, hypertension, COPD, etc.)
+    - Previous surgeries
+    - Relevant hospitalizations
+    - Known conditions affecting treatment plans
+  </Accordion>
+  
+  <Accordion title="Vital Signs">
+    The most recent vital sign measurements:
+    
+    <ResponseField name="Temperature" type="number">
+      Body temperature in Celsius or Fahrenheit
+    </ResponseField>
+    
+    <ResponseField name="Heart Rate" type="number">
+      Beats per minute (bpm)
+    </ResponseField>
+    
+    <ResponseField name="Blood Pressure" type="string">
+      Systolic/Diastolic (e.g., "120/80")
+    </ResponseField>
+    
+    <ResponseField name="Respiratory Rate" type="number">
+      Breaths per minute
+    </ResponseField>
+    
+    <ResponseField name="Oxygen Saturation" type="percentage">
+      SpO2 percentage (e.g., "98%")
+    </ResponseField>
+  </Accordion>
+  
+  <Accordion title="Medications">
+    Current medication regimen including:
+    - Medication name and dosage
+    - Route of administration
+    - Frequency and timing
+    - Last administration time
+    
+    <Note>
+      Medications are displayed as they appear in the medical record. Always verify with the medication administration record (MAR) for precise timing.
+    </Note>
+  </Accordion>
+  
+  <Accordion title="Allergies">
+    Known allergies and reactions:
+    - Medication allergies
+    - Food allergies
+    - Environmental allergies
+    - Type of reaction (rash, anaphylaxis, etc.)
+    
+    <Warning>
+      No known allergies are typically documented as "NKDA" (No Known Drug Allergies). Absence of allergy information should be verified.
+    </Warning>
+  </Accordion>
+</AccordionGroup>
+
+### Task Status Overview
+
+The task status section provides a real-time view of all care activities:
+
+**Task Summary Dashboard:**
+- **Total Tasks**: All tasks scheduled for the patient
+- **Completed**: Tasks finished during current shift
+- **Pending**: Outstanding tasks requiring attention
+
+**Task Categories:**
+
+<Tabs>
+  <Tab title="Completed Tasks">
+    Shows all tasks marked as complete this shift:
+    - Checkmark icon indicates completion
+    - Timestamp shows when task was scheduled
+    - Priority level displayed (critical, high, medium, low)
+    - Task type (medication, assessment, procedure, etc.)
+    - Detailed description of the task
+    
+    **Example Completed Tasks:**
+    - "08:00 - Administer morning medications"
+    - "10:00 - Vital signs assessment"
+    - "14:00 - Wound dressing change"
+  </Tab>
+  
+  <Tab title="Outstanding Tasks">
+    Shows pending tasks sorted by priority:
+    - **Critical** (red badge): Requires immediate attention
+    - **High** (orange badge): Important, complete soon
+    - **Medium** (yellow badge): Complete during shift
+    - **Low** (green badge): Complete as time allows
+    
+    **Priority Sorting:**
+    Tasks are automatically sorted with highest priority first to help you focus on what's most important.
+    
+    <Tip>
+      Outstanding tasks are automatically included in generated handoff notes, ensuring nothing is missed during shift change.
+    </Tip>
+  </Tab>
+</Tabs>
+
+**Interacting with Tasks:**
+
+<Steps>
+  <Step title="View Task Details">
+    Each task displays:
+    - Scheduled time
+    - Priority level badge
+    - Task type label
+    - Detailed description
+  </Step>
+  
+  <Step title="Mark Task Complete">
+    Click the checkbox next to any task to toggle its completion status:
+    - Empty square = Pending task
+    - Filled checkmark = Completed task
+  </Step>
+  
+  <Step title="Automatic Sync">
+    Task status updates immediately across all devices and is reflected in handoff notes when regenerated.
+  </Step>
+</Steps>
+
+</Steps>
+
+### Right Panel: Handoff Notes
+
+The right panel is dedicated to generating, viewing, and managing handoff notes. See the [Generating Notes](/guide/generating-notes) and [Editing & Saving](/guide/editing-saving) guides for detailed information.
+
+## Editing Patient Information
+
+You can update patient information directly from the patient record view.
+
+<Steps>
+
+### Enable Edit Mode
+
+1. Click the **"Edit Patient Info"** button in the patient header
+2. Editable fields will become text inputs
+
+### Update Information
+
+You can modify:
+
+<ParamField path="name" type="string" required>
+  Patient's full name
+</ParamField>
+
+<ParamField path="age" type="number" required>
+  Patient's current age
+</ParamField>
+
+<ParamField path="sex" type="string" required>
+  Patient's sex (M/F/Other)
+</ParamField>
+
+<ParamField path="chiefComplaint" type="string" required>
+  Current chief complaint or admission reason
+</ParamField>
+
+<ParamField path="codeStatus" type="string" required>
+  Current code status (Full Code, DNR, DNI, Comfort Care)
+</ParamField>
+
+### Save Changes
+
+1. Review your changes for accuracy
+2. Click **"Save Patient Info"**
+3. Changes are immediately saved and visible to all users
+
+<Note>
+  You can click **"Cancel"** at any time to discard changes without saving.
+</Note>
+
+</Steps>
+
+<Warning>
+  Changes to patient information are permanent and affect all handoff documentation. Ensure accuracy and consult facility policies regarding documentation requirements.
+</Warning>
+
+## Real-Time Updates
+
+The patient record system includes real-time synchronization:
+
+### Automatic Refresh
+
+<Card title="Live Data Sync" icon="arrows-rotate">
+  Changes made by other nurses or systems are automatically reflected in your view without needing to refresh the page.
+</Card>
+
+**What Updates in Real-Time:**
+- Patient demographics and information
+- Vital signs as they're recorded
+- Task completion status
+- Handoff notes when saved
+- Room assignments
+
+### Conflict Prevention
+
+<CardGroup cols={2}>
+  <Card title="Optimistic Updates" icon="bolt">
+    Your changes appear immediately in your view for a responsive experience
+  </Card>
+  
+  <Card title="Server Validation" icon="server">
+    Changes are validated and synchronized with the database to ensure data integrity
+  </Card>
+</CardGroup>
+
+## Data Accuracy and Validation
+
+<AccordionGroup>
+  <Accordion title="Data Source">
+    Patient records are pulled from your facility's Supabase database, which integrates with:
+    - Electronic Health Records (EHR)
+    - Medication Administration Records (MAR)
+    - Vital signs monitoring systems
+    - Task management systems
+  </Accordion>
+  
+  <Accordion title="Update Frequency">
+    Different data types update at different intervals:
+    - **Real-time**: Task status, handoff notes
+    - **Every 5 minutes**: Vital signs, medications
+    - **On-demand**: Patient demographics, medical history
+  </Accordion>
+  
+  <Accordion title="Data Validation">
+    The system validates:
+    - Patient identifiers (MRN) match database records
+    - Required fields are populated
+    - Data types are correct (numbers for vitals, dates for timestamps)
+    - Code status values are from approved list
+  </Accordion>
+</AccordionGroup>
+
+## Viewing Multiple Patient Records
+
+When managing multiple patients, use the dashboard filtering features:
+
+### Filter by Assignment
+
+<Steps>
+  <Step title="Show My Patients">
+    Click the **"My Patients"** button to display only rooms assigned to you
+  </Step>
+  
+  <Step title="View All Patients">
+    Click the button again to show all active patients in your unit
+  </Step>
+</Steps>
+
+### Filter by Risk Level
+
+Use the risk level dropdown to focus on specific patient populations:
+
+- **All Risk Levels (X)**: View all patients (count shown in parentheses)
+- **Critical (X)**: Life-threatening conditions
+- **High (X)**: Serious conditions requiring close monitoring
+- **Medium (X)**: Stable with regular care needs
+- **Low (X)**: Stable with minimal intervention
+
+## Navigation Tips
+
+<CardGroup cols={2}>
+  <Card title="Quick Return" icon="arrow-left">
+    Use the **"Back to Patient List"** button to return to the dashboard without losing your place
+  </Card>
+  
+  <Card title="Keyboard Shortcuts" icon="keyboard">
+    Press `Esc` to quickly return to the patient list from any patient record view
+  </Card>
+  
+  <Card title="Browser Navigation" icon="browser">
+    Use browser back/forward buttons - the application maintains proper navigation history
+  </Card>
+  
+  <Card title="Direct URLs" icon="link">
+    Bookmark or share specific patient record URLs for quick access
+  </Card>
+</CardGroup>
+
+## Troubleshooting
+
+<AccordionGroup>
+  <Accordion title="Patient data not loading">
+    **Symptoms**: Loading spinner appears indefinitely, or error message displays
+    
+    **Solutions**:
+    1. Check your network connection
+    2. Verify you're logged in with valid credentials
+    3. Click the **"Retry"** button if error message appears
+    4. Contact IT if database connectivity issues persist
+  </Accordion>
+  
+  <Accordion title="Updates not appearing">
+    **Symptoms**: Changes made by others aren't visible
+    
+    **Solutions**:
+    1. Real-time sync may have a 1-2 second delay - wait briefly
+    2. Return to dashboard and reopen the patient record
+    3. Check console for WebSocket connection errors
+    4. Verify Supabase real-time subscriptions are active
+  </Accordion>
+  
+  <Accordion title="Cannot edit patient information">
+    **Symptoms**: Edit button is disabled or changes won't save
+    
+    **Solutions**:
+    1. Verify you have proper permissions in the system
+    2. Check if another user is currently editing the same patient
+    3. Ensure all required fields are filled out
+    4. Try logging out and back in to refresh permissions
+  </Accordion>
+</AccordionGroup>
+
+## Next Steps
+
+<CardGroup cols={3}>
+  <Card title="Complete Workflow" icon="workflow" href="/guide/workflow">
+    Learn the full handoff process from start to finish
+  </Card>
+  
+  <Card title="Generating Notes" icon="sparkles" href="/guide/generating-notes">
+    Use AI to create comprehensive handoff notes
+  </Card>
+  
+  <Card title="Editing & Saving" icon="floppy-disk" href="/guide/editing-saving">
+    Master note editing and saving workflows
+  </Card>
+</CardGroup>

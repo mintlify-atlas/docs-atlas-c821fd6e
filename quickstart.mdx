@@ -1,80 +1,495 @@
 ---
-title: "Quickstart"
-description: "Start building awesome documentation in minutes"
+title: Quickstart Guide
+description: Get from zero to your first AI-powered handoff note in 10 minutes
 ---
 
-## Get started in three steps
+## Prerequisites
 
-Get your documentation site running locally and make your first customization.
+Before you begin, make sure you have:
 
-### Step 1: Set up your local environment
-
-<AccordionGroup>
-  <Accordion icon="copy" title="Clone your docs locally">
-    During the onboarding process, you created a GitHub repository with your docs content if you didn't already have one. You can find a link to this repository in your [dashboard](https://dashboard.mintlify.com).
-    
-    To clone the repository locally so that you can make and preview changes to your docs, follow the [Cloning a repository](https://docs.github.com/en/repositories/creating-and-managing-repositories/cloning-a-repository) guide in the GitHub docs.
-  </Accordion>
-  <Accordion icon="rectangle-terminal" title="Start the preview server">
-    1. Install the Mintlify CLI: `npm i -g mint`
-    2. Navigate to your docs directory and run: `mint dev`
-    3. Open `http://localhost:3000` to see your docs live!
-    
-    <Tip>Your preview updates automatically as you edit files.</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 2: Deploy your changes
-
-<AccordionGroup>
-  <Accordion icon="github" title="Install our GitHub app">
-    Install the Mintlify GitHub app from your [dashboard](https://dashboard.mintlify.com/settings/organization/github-app).
-    
-    Our GitHub app automatically deploys your changes to your docs site, so you don't need to manage deployments yourself.
-</Accordion>
-<Accordion icon="palette" title="Update your site name and colors">
-    For a first change, let's update the name and colors of your docs site.
-
-    1. Open `docs.json` in your editor.
-    2. Change the `"name"` field to your project name.
-    3. Update the `"colors"` to match your brand.
-    4. Save and see your changes instantly at `http://localhost:3000`.
-
-    <Tip>Try changing the primary color to see an immediate difference!</Tip>
-  </Accordion>
-</AccordionGroup>
-
-### Step 3: Go live
-
-<Accordion icon="rocket" title="Publish your docs">
-  1. Commit and push your changes.
-  2. Your docs will update and be live in moments!
-</Accordion>
-
-## Next steps
-
-Now that you have your docs running, explore these key features:
-
-<CardGroup cols={2}>
-
-<Card title="Write Content" icon="pen-to-square" href="/essentials/markdown">
-  Learn MDX syntax and start writing your documentation.
-</Card>
-
-<Card title="Customize style" icon="palette" href="/essentials/settings">
-  Make your docs match your brand perfectly.
-</Card>
-
-<Card title="Add code examples" icon="square-code" href="/essentials/code">
-  Include syntax-highlighted code blocks.
-</Card>
-
-<Card title="API documentation" icon="code" href="/api-reference/introduction">
-  Auto-generate API docs from OpenAPI specs.
-</Card>
-
-</CardGroup>
+- **Node.js** version 18 or higher ([Download here](https://nodejs.org/))
+- **npm** or **yarn** package manager (comes with Node.js)
+- **A Supabase account** ([Sign up free](https://supabase.com/))
+- **An AI API key** from either:
+  - [Anthropic Console](https://console.anthropic.com/) for Claude
+  - [OpenAI Platform](https://platform.openai.com/api-keys) for GPT-4o
+  - Or both!
 
 <Note>
-  **Need help?** See our [full documentation](https://mintlify.com/docs) or join our [community](https://mintlify.com/community).
+  You need at least one AI API key configured for the app to work. Both providers can be used simultaneously if both keys are provided.
 </Note>
+
+## Installation
+
+<Steps>
+  <Step title="Clone and Install Dependencies">
+    Clone the repository and install all required packages:
+
+    ```bash
+    git clone <repository-url>
+    cd handoff
+    npm install
+    ```
+
+    This will install all frontend and backend dependencies including:
+    - React 18 and Vite for the frontend
+    - Express.js for the backend API
+    - Anthropic and OpenAI SDKs for AI integration
+    - Supabase client for authentication and database
+  </Step>
+
+  <Step title="Set Up Supabase Database">
+    Create a new Supabase project and set up the required tables:
+
+    ### Create Database Tables
+
+    Run these SQL commands in your Supabase SQL Editor:
+
+    ```sql
+    -- Patients table
+    CREATE TABLE patients (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      patient_id TEXT UNIQUE,
+      mrn TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      age INTEGER,
+      sex TEXT,
+      diagnosis TEXT,
+      condition TEXT,
+      risk_level TEXT DEFAULT 'medium',
+      code_status TEXT DEFAULT 'Full Code',
+      medications JSONB DEFAULT '[]',
+      allergies JSONB DEFAULT '[]',
+      admission_date TIMESTAMPTZ,
+      last_vitals JSONB DEFAULT '{}',
+      handoff_notes TEXT,
+      image_analysis TEXT,
+      last_handoff_update TIMESTAMPTZ,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Nurses table
+    CREATE TABLE nurses (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      email TEXT UNIQUE NOT NULL,
+      name TEXT NOT NULL,
+      auth_user_id UUID UNIQUE,
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Rooms table
+    CREATE TABLE rooms (
+      id TEXT PRIMARY KEY,
+      patient_id UUID REFERENCES patients(id),
+      grid_x INTEGER DEFAULT 0,
+      grid_y INTEGER DEFAULT 0,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Tasks table
+    CREATE TABLE tasks (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      patient_id UUID REFERENCES patients(id),
+      room_id TEXT REFERENCES rooms(id),
+      time TEXT NOT NULL,
+      type TEXT NOT NULL,
+      description TEXT NOT NULL,
+      priority TEXT DEFAULT 'medium',
+      completed BOOLEAN DEFAULT false,
+      created_at TIMESTAMPTZ DEFAULT NOW(),
+      updated_at TIMESTAMPTZ DEFAULT NOW()
+    );
+
+    -- Room assignments table
+    CREATE TABLE room_assignments (
+      id UUID DEFAULT gen_random_uuid() PRIMARY KEY,
+      room_id TEXT REFERENCES rooms(id),
+      nurse_id UUID REFERENCES nurses(id),
+      created_at TIMESTAMPTZ DEFAULT NOW()
+    );
+    ```
+
+    <Note>
+      These tables support real-time subscriptions. The application automatically refreshes when data changes.
+    </Note>
+  </Step>
+
+  <Step title="Configure Environment Variables">
+    Copy the example environment file and add your credentials:
+
+    ```bash
+    cp .env.example .env
+    ```
+
+    Edit `.env` and add your configuration:
+
+    <CodeGroup>
+      ```env Server Configuration
+      # Server Port
+      PORT=3001
+      ```
+
+      ```env Supabase (Required)
+      # Get these from your Supabase project settings
+      VITE_SUPABASE_URL=https://your-project.supabase.co
+      VITE_SUPABASE_ANON_KEY=your_anon_key_here
+      SUPABASE_SERVICE_KEY=your_service_role_key_here
+      ```
+
+      ```env AI Provider Keys (At least one required)
+      # Anthropic API key from: https://console.anthropic.com/
+      ANTHROPIC_API_KEY=your_anthropic_api_key_here
+
+      # OpenAI API key from: https://platform.openai.com/api-keys
+      OPENAI_API_KEY=your_openai_api_key_here
+      ```
+    </CodeGroup>
+
+    <Warning>
+      **Security Note**: API keys are server-side only and NEVER exposed to the browser. The backend server proxies all AI requests securely.
+    </Warning>
+  </Step>
+
+  <Step title="Create Nurse Accounts">
+    Add nurses to your database and create authentication accounts:
+
+    ### Option 1: Manually Add Nurses
+
+    Insert nurse records in your Supabase SQL Editor:
+
+    ```sql
+    INSERT INTO nurses (email, name) VALUES
+      ('nurse1@hospital.com', 'Jane Smith'),
+      ('nurse2@hospital.com', 'John Doe');
+    ```
+
+    ### Option 2: Create Auth Accounts
+
+    After adding nurses to the database, create Supabase Auth accounts for them:
+
+    ```bash
+    # Start the server first
+    npm run server
+
+    # In another terminal, create auth accounts
+    curl -X POST http://localhost:3001/api/nurses/create-accounts
+    ```
+
+    This endpoint will:
+    - Create Supabase Auth accounts for all nurses in your database
+    - Link auth users to nurse records via `auth_user_id`
+    - Return temporary passwords for each created account
+    - Skip nurses that already have accounts
+
+    <Note>
+      The temporary passwords should be changed on first login. The endpoint requires `SUPABASE_SERVICE_KEY` in your `.env` file.
+    </Note>
+  </Step>
+
+  <Step title="Start the Application">
+    Start both the backend server and frontend development server:
+
+    ```bash
+    npm start
+    ```
+
+    This runs both services concurrently:
+    - **Backend API**: http://localhost:3001
+    - **Frontend UI**: http://localhost:5173
+
+    <Note>
+      You can also run them separately with `npm run server` and `npm run dev` in different terminals.
+    </Note>
+
+    ### Verify Everything is Working
+
+    Check the server status:
+
+    ```bash
+    curl http://localhost:3001/api/health
+    ```
+
+    You should see:
+
+    ```json
+    {
+      "status": "ok",
+      "availableProviders": {
+        "claude": true,
+        "supabase": true
+      }
+    }
+    ```
+  </Step>
+</Steps>
+
+## Generate Your First Handoff Note
+
+Now let's create your first AI-powered handoff note!
+
+<Steps>
+  <Step title="Log In">
+    1. Open http://localhost:5173 in your browser
+    2. Log in with a nurse account email and password
+    3. You'll be redirected to the dashboard
+
+    <Note>
+      Use the email and temporary password from the account creation step.
+    </Note>
+  </Step>
+
+  <Step title="View Patient List">
+    From the dashboard:
+    1. Click on any patient card to open their detailed view
+    2. You'll see:
+       - Patient demographics and vital signs
+       - Medication list and allergies
+       - Tasks and their completion status
+       - Previous handoff notes (if any)
+
+    <Note>
+      If you don't see any patients, you'll need to add patient data to your Supabase `patients` table first.
+    </Note>
+  </Step>
+
+  <Step title="Generate Handoff Notes from Record">
+    In the patient detail view:
+
+    1. **Select AI Provider**: Choose Claude or OpenAI from the dropdown
+    2. **Click "Generate from Record"**: The AI will analyze the patient data
+    3. **Wait for Generation**: Takes 3-5 seconds
+    4. **Review the Notes**: AI generates structured handoff including:
+       - Patient overview and shift forecast
+       - Current clinical status and vital signs
+       - Key lab/imaging findings and trends
+       - Active medications and treatments
+       - Task status (completed vs. outstanding)
+       - Safety concerns and alerts
+
+    ```jsx Patient Data Flow
+    // Real API endpoint from server/index.js:145
+    POST /api/summarize-record/claude
+    
+    // Request body
+    {
+      "patientData": {
+        "name": "John Doe",
+        "age": 65,
+        "medications": ["Metformin", "Lisinopril"],
+        "tasks": [
+          { "time": "08:00", "description": "Vitals check", "completed": true },
+          { "time": "12:00", "description": "Blood draw", "completed": false }
+        ]
+      },
+      "previousNotes": "...",  // Optional: for change tracking
+      "imageAnalysis": "..."   // Optional: from whiteboard image
+    }
+    ```
+
+    <Note>
+      The AI uses Claude Sonnet 4 (`claude-sonnet-4-20250514`) which excels at medical terminology and trend analysis.
+    </Note>
+  </Step>
+
+  <Step title="Upload Handoff Image (Optional)">
+    To enhance your handoff with whiteboard or document images:
+
+    1. **Click "Upload Handoff Image"**
+    2. **Select an image**: JPG, PNG, or other image format (max 10MB)
+    3. **Analyze**: The AI extracts information from the image
+    4. **Merge**: Click "Generate from Record" again to combine image analysis with patient data
+
+    ```jsx Image Analysis Flow
+    // Real API endpoint from server/index.js:63
+    POST /api/analyze-image/claude
+    
+    // Multipart form data with image file
+    Content-Type: multipart/form-data
+    
+    // AI extracts:
+    // - Vital signs from whiteboard
+    // - Handwritten notes and orders
+    // - Task lists and checkboxes
+    // - Safety alerts and warnings
+    ```
+
+    <Warning>
+      Image information is automatically integrated into the appropriate sections, not listed separately. The AI merges image data with the electronic record intelligently.
+    </Warning>
+  </Step>
+
+  <Step title="Edit and Save">
+    Customize the AI-generated notes:
+
+    1. **Click "Edit"**: Opens the notes in edit mode
+    2. **Make Changes**: Add clinical judgment, clarify details, or update information
+    3. **Click "Save"**: Stores notes to the patient record
+    4. **Copy**: Use the "Copy" button to share with your team
+
+    ```jsx Save Handoff Notes
+    // Real API endpoint from server/index.js:469
+    POST /api/patients/:mrn/handoff
+    
+    // Request body
+    {
+      "handoffNotes": "## Patient Overview\n...",
+      "imageAnalysis": "Whiteboard shows...",
+      "timestamp": "2024-03-04T10:30:00Z"
+    }
+    ```
+
+    The handoff notes are saved with:
+    - Current timestamp for version tracking
+    - Both handoff notes and image analysis (if provided)
+    - Automatic update to `updated_at` field
+  </Step>
+</Steps>
+
+## Real Usage Example
+
+Here's how the components work together:
+
+<CodeGroup>
+  ```jsx Dashboard Component (src/components/Dashboard.jsx)
+  // Real-time patient data subscription
+  const channel = supabase
+    .channel('rooms-changes')
+    .on('postgres_changes', {
+      event: '*',
+      schema: 'public',
+      table: 'patients'
+    }, () => {
+      fetchRooms(); // Auto-refresh on changes
+    })
+    .subscribe();
+  ```
+
+  ```jsx Patient Detail Component (src/components/PatientDetail.jsx)
+  // Generate AI handoff notes
+  const generateHandoffNotes = async () => {
+    const response = await fetch(
+      `http://localhost:3001/api/summarize-record/${aiProvider}`,
+      {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          patientData: patient,
+          previousNotes: handoffNotes,
+          imageAnalysis: imageAnalysis
+        })
+      }
+    );
+    const data = await response.json();
+    setHandoffNotes(data.summary);
+  };
+  ```
+
+  ```jsx Image Analyzer Component (src/components/ImageAnalyzer.jsx)
+  // Upload and analyze handoff image
+  const formData = new FormData();
+  formData.append('image', selectedFile);
+  
+  const response = await fetch(
+    `http://localhost:3001/api/analyze-image/claude`,
+    {
+      method: 'POST',
+      body: formData
+    }
+  );
+  const data = await response.json();
+  setSummary(data.summary);
+  ```
+</CodeGroup>
+
+## Key API Endpoints Reference
+
+These are the main endpoints you'll interact with:
+
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/api/health` | GET | Check server status and available AI providers |
+| `/api/analyze-image/claude` | POST | Analyze handoff whiteboard/document image with Claude |
+| `/api/summarize-record/claude` | POST | Generate handoff notes from patient record with Claude |
+| `/api/patients` | GET | Get all patient records with room and task info |
+| `/api/patients/:id` | GET | Get single patient record by MRN |
+| `/api/patients/:id/handoff` | POST | Save handoff notes for a patient |
+| `/api/patients/:id` | PATCH | Update patient information |
+| `/api/tasks/:id` | PATCH | Update task completion status |
+| `/api/nurses` | GET | Get all nurses |
+| `/api/nurses/create-accounts` | POST | Create Supabase Auth accounts for nurses |
+
+<Note>
+  All endpoints run on `http://localhost:3001` by default. Change the port with the `PORT` environment variable.
+</Note>
+
+## Troubleshooting
+
+### "API is not configured" Error
+
+Make sure you have added at least one AI API key to your `.env` file:
+
+```env
+ANTHROPIC_API_KEY=sk-ant-...
+# OR
+OPENAI_API_KEY=sk-...
+```
+
+Restart the server after adding keys:
+
+```bash
+npm run server
+```
+
+### Server Not Starting
+
+Check if port 3001 is already in use:
+
+```bash
+# On macOS/Linux
+lsof -i :3001
+
+# Change the port in .env if needed
+PORT=3002
+```
+
+### Images Not Analyzing
+
+Ensure your image:
+- Is under 10MB (file size limit)
+- Is in a supported format (JPG, PNG, WebP, etc.)
+- Contains visible text or information
+
+### No Patients Showing
+
+Add sample patient data to your Supabase database:
+
+```sql
+INSERT INTO patients (mrn, name, age, sex, diagnosis, condition, risk_level) VALUES
+  ('MRN001', 'John Doe', 65, 'M', 'CHF', 'Stable', 'medium'),
+  ('MRN002', 'Jane Smith', 72, 'F', 'Pneumonia', 'Improving', 'high');
+
+INSERT INTO rooms (id, patient_id, grid_x, grid_y) VALUES
+  ('101', (SELECT id FROM patients WHERE mrn = 'MRN001'), 0, 0),
+  ('102', (SELECT id FROM patients WHERE mrn = 'MRN002'), 1, 0);
+```
+
+## Next Steps
+
+Now that you've generated your first handoff note, explore more features:
+
+- **Task Management**: Mark tasks as completed from the patient detail view
+- **Route Planning**: Use the Route view to optimize your rounds
+- **Team Coordination**: View nurse assignments in the Schedule view
+- **Activity Logs**: Track all system events in the Logs view
+- **Risk Filtering**: Filter patients by risk level (critical, high, medium, low)
+- **My Patients View**: Toggle to see only your assigned patients
+
+<Card title="API Documentation" icon="code" href="/api/overview">
+  Explore all available API endpoints and request/response formats.
+</Card>
+
+<Card title="Features Guide" icon="sparkles" href="/features/patient-handoff">
+  Learn about all the features and capabilities of Nurse Handoff Helper.
+</Card>

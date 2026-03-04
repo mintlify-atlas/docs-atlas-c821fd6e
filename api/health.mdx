@@ -1,0 +1,110 @@
+---
+title: Health Check
+description: Check API and service availability
+---
+
+## GET /api/health
+
+Returns the health status of the API server and availability of integrated services.
+
+### Request
+
+No parameters required.
+
+```bash
+curl http://localhost:3001/api/health
+```
+
+### Response
+
+<ResponseField name="status" type="string">
+  Overall API status. Always returns `"ok"` if server is running.
+</ResponseField>
+
+<ResponseField name="availableProviders" type="object">
+  Status of integrated services
+  
+  <Expandable title="properties">
+    <ResponseField name="claude" type="boolean">
+      Whether Claude API is configured (ANTHROPIC_API_KEY is set)
+    </ResponseField>
+    
+    <ResponseField name="supabase" type="boolean">
+      Whether Supabase is configured (SUPABASE_URL and SUPABASE_ANON_KEY are set)
+    </ResponseField>
+  </Expandable>
+</ResponseField>
+
+### Response Example
+
+<CodeGroup>
+
+```json Success Response
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": true,
+    "supabase": true
+  }
+}
+```
+
+```json Partial Configuration
+{
+  "status": "ok",
+  "availableProviders": {
+    "claude": false,
+    "supabase": true
+  }
+}
+```
+
+</CodeGroup>
+
+### Use Cases
+
+- Verify API server is running
+- Check which AI providers are available before making requests
+- Monitor service configuration in production
+- Implement client-side feature flags based on available services
+
+### Integration Example
+
+<CodeGroup>
+
+```javascript fetch
+const checkHealth = async () => {
+  const response = await fetch('http://localhost:3001/api/health');
+  const data = await response.json();
+  
+  if (data.availableProviders.claude) {
+    console.log('Claude AI is available');
+  } else {
+    console.warn('Claude AI is not configured');
+  }
+  
+  return data;
+};
+```
+
+```python Python
+import requests
+
+def check_health():
+    response = requests.get('http://localhost:3001/api/health')
+    data = response.json()
+    
+    if data['availableProviders']['claude']:
+        print('Claude AI is available')
+    else:
+        print('Claude AI is not configured')
+    
+    return data
+```
+
+```bash cURL
+curl -X GET http://localhost:3001/api/health \
+  -H "Content-Type: application/json"
+```
+
+</CodeGroup>
