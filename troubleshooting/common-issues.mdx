@@ -23,17 +23,14 @@ Before troubleshooting, ensure you've completed the initial setup as described i
 
 1. Verify your `.env` file exists in the project root directory
 
-2. Check that at least one AI provider API key is configured:
+2. Check that your Anthropic API key is configured:
 
 ```env
-# You need at least one of these:
 ANTHROPIC_API_KEY=your_anthropic_key_here
-OPENAI_API_KEY=your_openai_key_here
 ```
 
-3. Ensure the API keys are valid:
+3. Ensure the API key is valid:
    - **Anthropic keys** start with `sk-ant-`
-   - **OpenAI keys** start with `sk-`
 
 4. Restart the backend server after modifying `.env`:
 
@@ -79,7 +76,7 @@ If a provider shows `false`, the API key is not configured correctly.
 
 3. **Insufficient credits/quota**:
    - Add credits to your Anthropic account
-   - Check billing status in OpenAI dashboard
+   - Check billing status in Anthropic Console
 
 4. **Network restrictions**:
    - Ensure your server can reach API endpoints
@@ -476,14 +473,12 @@ const PORT = process.env.PORT || 3001;
 
 2. **Complex patient records**: Very detailed records take longer to analyze
 
-3. **API provider latency**: Check status pages:
-   - [Anthropic Status](https://status.anthropic.com/)
-   - [OpenAI Status](https://status.openai.com/)
+3. **API provider latency**: Check [Anthropic Status](https://status.anthropic.com/)
 
-4. **Network issues**: Test connection to API endpoints
+4. **Network issues**: Test connection to Anthropic API endpoints
 
 <Tip>
-The AI models (Claude Sonnet 4 and GPT-4o) typically respond in 3-10 seconds. If consistently slower, investigate network or API issues.
+Claude Sonnet 4 typically responds in 3-10 seconds. If consistently slower, investigate network or API issues.
 </Tip>
 
 ### High Server Memory Usage
@@ -578,7 +573,6 @@ When reporting issues, include:
 Before deploying changes:
 
 - [ ] Test AI analysis with Claude
-- [ ] Test AI analysis with OpenAI (if configured)
 - [ ] Test image upload and analysis
 - [ ] Test patient record retrieval
 - [ ] Test handoff note generation

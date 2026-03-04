@@ -18,8 +18,7 @@ This application processes Protected Health Information (PHI). Non-compliance wi
 Ensure you have signed Business Associate Agreements with:
 
 - **Supabase**: Required for database hosting ([Supabase BAA](https://supabase.com/legal/hipaa-baa))
-- **Anthropic**: Required if using Claude ([Anthropic Enterprise](https://www.anthropic.com/enterprise))
-- **OpenAI**: Required if using GPT-4 ([OpenAI BAA](https://openai.com/security))
+- **Anthropic**: Required for Claude AI integration ([Anthropic Enterprise](https://www.anthropic.com/enterprise))
 - **Hosting provider**: Required for your application hosting
 
 <Note>
@@ -88,23 +87,22 @@ SUPABASE_SERVICE_KEY=eyJhbGc...
 - Rotate regularly (every 90 days recommended)
 </Accordion>
 
-#### AI Provider Keys
+#### Anthropic API Key
 
 ```env
-# Both are server-only
+# Server-only - NEVER expose to browser
 ANTHROPIC_API_KEY=sk-ant-...
-OPENAI_API_KEY=sk-...
 ```
 
 **Security measures:**
 
-1. **Server-side only**: All AI requests are proxied through the backend (server/index.js:server/index.js:27-29, server/index.js:62-142)
-2. **Never exposed**: Keys never sent to browser
+1. **Server-side only**: All AI requests are proxied through the backend (server/index.js:27-29, server/index.js:62-142)
+2. **Never exposed**: Key never sent to browser
 3. **Request validation**: Backend validates all requests before forwarding
 4. **Rate limiting**: Implement rate limits to prevent abuse
 
 <Tip>
-The backend architecture already keeps API keys secure by requiring all AI requests to go through the Express server. Never modify this to call AI APIs directly from the frontend.
+The backend architecture already keeps the API key secure by requiring all AI requests to go through the Express server. Never modify this to call the Anthropic API directly from the frontend.
 </Tip>
 
 ### Key Rotation Policy
@@ -112,7 +110,7 @@ The backend architecture already keeps API keys secure by requiring all AI reque
 Establish a regular key rotation schedule:
 
 - **Supabase Service Role Key**: Every 90 days
-- **AI Provider Keys**: Every 180 days
+- **Anthropic API Key**: Every 180 days
 - **After security incident**: Immediately
 - **After team member departure**: Within 24 hours
 
@@ -526,7 +524,6 @@ app.post('/api/nurses/create-accounts', apiKeyAuth, async (req, res) => {
 - [Supabase Security Best Practices](https://supabase.com/docs/guides/platform/security)
 - [OWASP Top 10](https://owasp.org/www-project-top-ten/)
 - [Anthropic Security](https://www.anthropic.com/security)
-- [OpenAI Security Portal](https://openai.com/security)
 
 ## Next Steps
 

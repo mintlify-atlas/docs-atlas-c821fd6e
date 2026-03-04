@@ -20,7 +20,7 @@ Before deploying to production, ensure you have:
 
 - Node.js 18 or higher
 - A Supabase project with production database
-- API keys from Anthropic and/or OpenAI
+- Anthropic API key for Claude
 - A hosting platform (see recommendations below)
 - SSL/TLS certificates for HTTPS
 - Environment variables securely configured
@@ -82,16 +82,14 @@ VITE_SUPABASE_URL=your_production_supabase_url
 VITE_SUPABASE_ANON_KEY=your_production_anon_key
 SUPABASE_SERVICE_KEY=your_production_service_role_key
 
-# AI Provider API Keys (at least one required)
+# Anthropic API Key (Required)
 ANTHROPIC_API_KEY=your_production_anthropic_key
-OPENAI_API_KEY=your_production_openai_key
 ```
 
 <Note>
 - `VITE_SUPABASE_URL` and `VITE_SUPABASE_ANON_KEY` are exposed to the frontend
 - `SUPABASE_SERVICE_KEY` is server-side only and enables admin operations
-- AI API keys are server-side only and never exposed to the browser
-- You need at least one AI provider configured (Claude or OpenAI)
+- `ANTHROPIC_API_KEY` is server-side only and never exposed to the browser
 </Note>
 
 ### Environment Variable Management
@@ -325,7 +323,7 @@ As your patient database grows:
 ### API Rate Limits
 
 <Warning>
-Both Anthropic and OpenAI have rate limits. Monitor usage and implement:
+Anthropic has rate limits on API usage. Monitor usage and implement:
 - Request queuing for high-volume periods
 - Caching for repeated analyses
 - Rate limiting on your API endpoints

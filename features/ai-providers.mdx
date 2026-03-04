@@ -1,6 +1,6 @@
 ---
 title: "AI Providers"
-description: "Claude and OpenAI integration for handoff note generation and image analysis"
+description: "Claude integration for AI-powered handoff note generation and image analysis"
 icon: "robot"
 ---
 
@@ -379,23 +379,23 @@ Anthropic API rate limits vary by tier. For production use:
   </Step>
 </Steps>
 
-## Future Providers
+## Provider Architecture
 
-While Claude is currently the only provider, the architecture supports adding more:
+The API uses a provider-specific path structure to support potential future AI providers:
 
 ```javascript
-// Future: OpenAI support
-app.post("/api/summarize-record/openai", async (req, res) => {
-  // OpenAI implementation
+// Current implementation
+app.post("/api/summarize-record/claude", async (req, res) => {
+  // Claude implementation
 });
 
-app.post("/api/analyze-image/openai", async (req, res) => {
-  // OpenAI vision implementation
+app.post("/api/analyze-image/claude", async (req, res) => {
+  // Claude vision implementation
 });
 ```
 
 <Tip>
-The API uses a provider parameter in the URL path (e.g., `/claude`, `/openai`) to support multiple AI providers with the same interface.
+The API design allows for future expansion to additional AI providers while maintaining the same interface pattern.
 </Tip>
 
 ## Best Practices

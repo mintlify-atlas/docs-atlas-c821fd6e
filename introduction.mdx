@@ -5,7 +5,7 @@ description: AI-powered nurse handoff system for streamlined patient care coordi
 
 ## What is Nurse Handoff Helper?
 
-Nurse Handoff Helper is an AI-powered web application designed to streamline nurse-to-nurse patient handoffs. The application uses advanced AI models (Claude Sonnet 4 and GPT-4o) to analyze handoff documents, generate structured summaries, and make critical patient information easily accessible during shift transitions.
+Nurse Handoff Helper is an AI-powered web application designed to streamline nurse-to-nurse patient handoffs. The application uses Claude Sonnet 4 from Anthropic to analyze handoff documents, generate structured summaries, and make critical patient information easily accessible during shift transitions.
 
 <Note>
   Nurse handoffs are critical moments in patient care. This tool helps nurses quickly understand patient status, pending tasks, and safety concerns—reducing miscommunication and improving patient outcomes.
@@ -45,12 +45,13 @@ Upload handoff whiteboards or documents and get instant AI analysis:
 - **Smart Merging**: Automatically integrate image data with electronic records
 - **Multi-Source Summary**: Combine patient record + image analysis for comprehensive handoff notes
 
-### Dual AI Provider Support
+### AI-Powered Analysis
 
-Choose the AI model that works best for your needs:
+Powered by Claude Sonnet 4 from Anthropic:
 
-- **Claude Sonnet 4** (Anthropic): Advanced reasoning and medical terminology understanding
-- **GPT-4o** (OpenAI): Fast processing with strong pattern recognition
+- Advanced reasoning and medical terminology understanding
+- Vision capabilities for analyzing handoff whiteboard images
+- Comprehensive trend analysis for vitals and lab values
 
 ### Editable & Persistent Notes
 
@@ -87,7 +88,7 @@ The application is built with modern, secure technologies:
 - **Backend**: Express.js REST API (Node.js)
 - **Database**: Supabase (PostgreSQL) with real-time subscriptions
 - **Authentication**: Supabase Auth with secure session management
-- **AI Integration**: Anthropic SDK (Claude) and OpenAI SDK
+- **AI Integration**: Anthropic SDK (Claude Sonnet 4)
 - **Styling**: Tailwind CSS v4 with custom healthcare theme
 
 ## Security & Compliance

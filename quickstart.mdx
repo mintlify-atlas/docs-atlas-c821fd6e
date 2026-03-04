@@ -10,13 +10,10 @@ Before you begin, make sure you have:
 - **Node.js** version 18 or higher ([Download here](https://nodejs.org/))
 - **npm** or **yarn** package manager (comes with Node.js)
 - **A Supabase account** ([Sign up free](https://supabase.com/))
-- **An AI API key** from either:
-  - [Anthropic Console](https://console.anthropic.com/) for Claude
-  - [OpenAI Platform](https://platform.openai.com/api-keys) for GPT-4o
-  - Or both!
+- **An Anthropic API key** from the [Anthropic Console](https://console.anthropic.com/) for Claude
 
 <Note>
-  You need at least one AI API key configured for the app to work. Both providers can be used simultaneously if both keys are provided.
+  The application uses Claude Sonnet 4 for all AI-powered features.
 </Note>
 
 ## Installation
@@ -34,7 +31,7 @@ Before you begin, make sure you have:
     This will install all frontend and backend dependencies including:
     - React 18 and Vite for the frontend
     - Express.js for the backend API
-    - Anthropic and OpenAI SDKs for AI integration
+    - Anthropic SDK for Claude AI integration
     - Supabase client for authentication and database
   </Step>
 
@@ -138,12 +135,9 @@ Before you begin, make sure you have:
       SUPABASE_SERVICE_KEY=your_service_role_key_here
       ```
 
-      ```env AI Provider Keys (At least one required)
+      ```env Anthropic API Key (Required)
       # Anthropic API key from: https://console.anthropic.com/
       ANTHROPIC_API_KEY=your_anthropic_api_key_here
-
-      # OpenAI API key from: https://platform.openai.com/api-keys
-      OPENAI_API_KEY=your_openai_api_key_here
       ```
     </CodeGroup>
 
@@ -257,10 +251,9 @@ Now let's create your first AI-powered handoff note!
   <Step title="Generate Handoff Notes from Record">
     In the patient detail view:
 
-    1. **Select AI Provider**: Choose Claude or OpenAI from the dropdown
-    2. **Click "Generate from Record"**: The AI will analyze the patient data
-    3. **Wait for Generation**: Takes 3-5 seconds
-    4. **Review the Notes**: AI generates structured handoff including:
+    1. **Click "Generate from Record"**: The AI will analyze the patient data
+    2. **Wait for Generation**: Takes 3-5 seconds
+    3. **Review the Notes**: Claude AI generates structured handoff including:
        - Patient overview and shift forecast
        - Current clinical status and vital signs
        - Key lab/imaging findings and trends
@@ -428,15 +421,13 @@ These are the main endpoints you'll interact with:
 
 ### "API is not configured" Error
 
-Make sure you have added at least one AI API key to your `.env` file:
+Make sure you have added your Anthropic API key to your `.env` file:
 
 ```env
 ANTHROPIC_API_KEY=sk-ant-...
-# OR
-OPENAI_API_KEY=sk-...
 ```
 
-Restart the server after adding keys:
+Restart the server after adding the key:
 
 ```bash
 npm run server

@@ -98,7 +98,7 @@ Generation typically takes **5-15 seconds** depending on:
 - Complexity of the patient record
 - Amount of historical data
 - Current server load
-- Selected AI provider (Claude, OpenAI, or Gemini)
+- AI service availability
 
 <Tip>
   A loading indicator with "Generating..." text appears during processing. You can continue viewing patient information while generation completes.
@@ -192,51 +192,19 @@ To remove an uploaded image:
 
 </Steps>
 
-## AI Provider Selection
+## AI Provider
 
-The Nurse Handoff Helper supports multiple AI providers:
+The Nurse Handoff Helper uses **Claude Sonnet 4** by Anthropic for all AI-powered features.
 
-<Tabs>
-  <Tab title="Claude (Anthropic)">
-    **Best for**: Comprehensive clinical analysis and nuanced medical reasoning
-    
-    **Strengths**:
-    - Excellent at understanding complex medical terminology
-    - Strong contextual awareness
-    - Detailed, well-structured outputs
-    - Reliable interpretation of clinical scenarios
-    
-    **Model**: Claude 3.5 Sonnet
-  </Tab>
-  
-  <Tab title="OpenAI">
-    **Best for**: Quick generation with consistent formatting
-    
-    **Strengths**:
-    - Fast response times
-    - Consistent output format
-    - Good general medical knowledge
-    - Cost-effective for high-volume use
-    
-    **Model**: GPT-4 or GPT-4 Turbo
-  </Tab>
-  
-  <Tab title="Gemini (Google)">
-    **Best for**: Image analysis and multimodal understanding
-    
-    **Strengths**:
-    - Superior image OCR and interpretation
-    - Excellent at extracting text from photos
-    - Good integration of visual and text data
-    - Strong medical knowledge base
-    
-    **Model**: Gemini 1.5 Pro
-  </Tab>
-</Tabs>
+**Why Claude Sonnet 4?**
+- Excellent at understanding complex medical terminology
+- Strong contextual awareness for clinical scenarios
+- Detailed, well-structured outputs following SBAR format
+- Reliable interpretation of clinical data and trends
+- Superior image analysis for handoff document OCR
+- Consistent performance across all features
 
-<Note>
-  AI provider selection is typically configured at the system level. Contact your administrator if you need to change providers.
-</Note>
+**Model**: `claude-sonnet-4-20250514`
 
 ## Generated Note Structure
 
@@ -527,11 +495,11 @@ You can regenerate handoff notes at any time:
     - Network latency
   </Tab>
   
-  <Tab title="AI Provider">
-    - Different models have different speeds
-    - Claude: Comprehensive but slightly slower
-    - OpenAI: Fast and consistent
-    - Gemini: Best for images, moderate text speed
+  <Tab title="AI Service">
+    - Claude Sonnet 4 response times
+    - Anthropic API service availability
+    - Network latency to AI endpoints
+    - API rate limits and quotas
   </Tab>
 </Tabs>
 
@@ -543,13 +511,13 @@ You can regenerate handoff notes at any time:
 
 **Security Measures:**
 - All data transmitted over encrypted connections (HTTPS/TLS)
-- AI providers are HIPAA-compliant and have Business Associate Agreements (BAA)
+- Anthropic is HIPAA-compliant and provides Business Associate Agreements (BAA)
 - Patient identifiers are handled securely
 - Access controlled by role-based permissions
 - Audit logs track all access and modifications
 
 <Info>
-  Generated notes are stored in your facility's secure database, not retained by AI providers.
+  Generated notes are stored in your facility's secure database, not retained by Anthropic.
 </Info>
 
 ## Next Steps
