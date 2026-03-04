@@ -1,0 +1,113 @@
+{
+  "projectType": "saas",
+  "projectName": "Nurse Handoff Helper",
+  "projectDescription": "AI-powered web application that streamlines nurse-to-nurse patient handoffs with automated note generation and image analysis.",
+  "theme": "almond",
+  "primaryColor": "#ce7152",
+  "lightColor": "#764e3f",
+  "darkColor": "#34342c",
+  "navigation": {
+    "tabs": [
+      {
+        "tab": "Documentation",
+        "groups": [
+          {
+            "group": "Get Started",
+            "pages": [
+              "introduction",
+              "quickstart"
+            ]
+          },
+          {
+            "group": "Setup",
+            "pages": [
+              "setup/installation",
+              "setup/environment",
+              "setup/supabase",
+              "setup/nurse-accounts"
+            ]
+          },
+          {
+            "group": "Features",
+            "pages": [
+              "features/patient-handoff",
+              "features/image-analysis",
+              "features/ai-providers",
+              "features/authentication"
+            ]
+          },
+          {
+            "group": "User Guide",
+            "pages": [
+              "guide/workflow",
+              "guide/patient-records",
+              "guide/generating-notes",
+              "guide/editing-saving"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "API Reference",
+        "groups": [
+          {
+            "group": "Overview",
+            "pages": [
+              "api/overview"
+            ]
+          },
+          {
+            "group": "Endpoints",
+            "pages": [
+              "api/health",
+              "api/image-analysis",
+              "api/record-summarization",
+              "api/patients",
+              "api/nurses"
+            ]
+          }
+        ]
+      },
+      {
+        "tab": "Deployment",
+        "groups": [
+          {
+            "group": "Deploy",
+            "pages": [
+              "deployment/production",
+              "deployment/security"
+            ]
+          },
+          {
+            "group": "Troubleshooting",
+            "pages": [
+              "troubleshooting/common-issues"
+            ]
+          }
+        ]
+      }
+    ]
+  },
+  "keyFeatures": [
+    "AI-powered handoff note generation from patient records",
+    "Image upload and analysis of handoff whiteboards",
+    "Dual AI support (Claude Sonnet 4 and GPT-4o)",
+    "Supabase authentication and patient database",
+    "Editable handoff notes with auto-save",
+    "Comprehensive patient detail views",
+    "Nurse account management with authentication",
+    "Modern React UI with Tailwind CSS"
+  ],
+  "publicApiSurface": [
+    "GET /api/health",
+    "POST /api/analyze-image/claude",
+    "POST /api/analyze-image/openai",
+    "POST /api/summarize-record/claude",
+    "POST /api/summarize-record/openai",
+    "GET /api/patients",
+    "GET /api/patients/:id",
+    "POST /api/patients/:id/handoff",
+    "GET /api/nurses",
+    "POST /api/nurses/create-accounts"
+  ]
+}
